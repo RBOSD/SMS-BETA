@@ -1,0 +1,79 @@
+<div class="content-header">
+    <div class="content-title">檢查計畫管理</div>
+</div>
+
+<div id="tab-plans" class="main-card">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+        <div style="flex:1; min-width:200px;">
+            <h3 style="margin:0 0 8px 0; font-weight:700; font-size:18px; color:#334155;">檢查計畫管理</h3>
+            <p style="margin:0; color:#64748b; font-size:13px;">
+                管理檢查計畫資料，可新增、編輯、刪除檢查計畫，並支援 CSV 匯入功能。
+            </p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start;">
+            <button class="btn btn-primary" onclick="openPlanModal('create')">新增計畫</button>
+            <button class="btn btn-outline" onclick="openPlanImportModal()">📥 CSV 匯入</button>
+        </div>
+    </div>
+    
+    <div
+        style="padding:16px; display:flex; gap:12px; align-items:center; border-bottom:1px solid var(--border); flex-wrap:wrap;">
+        <input id="planSearch" class="filter-input" placeholder="搜尋計畫名稱、描述..." style="max-width:300px;"
+            oninput="loadPlansPage(1)" autocomplete="off">
+        <select id="planYearFilter" class="filter-select" style="width:120px;" onchange="loadPlansPage(1)">
+            <option value="">全部年度</option>
+            <!-- JavaScript 會自動產生選項 -->
+        </select>
+        <select id="planStatusFilter" class="filter-select" style="width:120px;" onchange="loadPlansPage(1)">
+            <option value="">全部狀態</option>
+            <option value="active">進行中</option>
+            <option value="completed">已完成</option>
+            <option value="archived">已歸檔</option>
+        </select>
+        <select id="plansPageSize" class="page-size-select" onchange="loadPlansPage(1)">
+            <option value="10">10 筆/頁</option>
+            <option value="20" selected>20 筆/頁</option>
+            <option value="50">50 筆/頁</option>
+        </select>
+        <div style="margin-left:auto;">
+            <button class="btn btn-outline" onclick="loadPlansPage(1)">搜尋</button>
+        </div>
+    </div>
+    <div id="plansPaginationTop" class="pagination-bar"
+        style="padding:16px; border-bottom:1px solid var(--border); justify-content: flex-end;"></div>
+    <div class="data-container">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th style="padding:16px;" onclick="plansSortBy('name')">計畫名稱</th>
+                    <th onclick="plansSortBy('year')">年度</th>
+                    <th>開立事項數量</th>
+                    <th onclick="plansSortBy('created_at')">建立時間</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="plansTableBody"></tbody>
+        </table>
+    </div>
+    <div id="plansPaginationBottom" class="pagination-bar" style="padding:16px; justify-content: center;"></div>
+</div>
+
+<!-- Plan Modal -->
+<div class="modal-overlay" id="planModal">
+    <div class="modal-box" style="max-width:600px;">
+        <h3 style="margin-top:0;" id="planModalTitle">檢查計畫</h3>
+        <input type="hidden" id="targetPlanId">
+        <div class="form-group">
+            <label>計畫名稱 <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="planName" class="filter-input" placeholder="例如: 113年度上半年定期檢查">
+        </div>
+        <div class="form-group">
+            <label>年度 <span style="color:#ef4444;">*</span></label>
+            <input type="text" id="planYear" class="filter-input" placeholder="例如: 113">
+        </div>
+        <div style="display:flex;gap:12px;margin-top:24px;">
+            <button class="btn btn-primary" style="flex:1;" onclick="submitPlan()">上傳至資料庫</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="closePlanModal()">取消</button>
+        </div>
+    </div>
+</div>

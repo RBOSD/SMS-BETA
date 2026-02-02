@@ -1,0 +1,164 @@
+                <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+                    <button class="dashboard-toggle-btn" onclick="toggleDashboard(this)"><span>收合統計圖表</span>
+                        <span>▲</span></button>
+                </div>
+
+                <div id="dashboardSection" class="dashboard-section">
+                    <div class="stats-bar">
+                        <div class="stat-item">
+                            <div class="stat-val" style="color:#6366f1" id="countTotal">0</div>
+                            <div class="stat-label">總開立事項</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" style="color:#ef4444" id="countActive">0</div>
+                            <div class="stat-label">列管中</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" style="color:#10b981" id="countResolved">0</div>
+                            <div class="stat-label">已解除/自行列管</div>
+                        </div>
+                    </div>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div><canvas id="statusChart"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div style="height:250px;width:100%;"><canvas id="unitChart"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div style="height:250px;width:100%;"><canvas id="trendChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="main-card">
+                    <div class="integrated-controls">
+                        <!-- Optimized Filter Layout -->
+                        <div class="filter-primary-row">
+                            <div class="search-item" style="flex:2;">
+                                <label>關鍵字</label>
+                                <input type="text" id="filterKeyword" class="filter-input" placeholder="輸入關鍵字..." autocomplete="off">
+                            </div>
+
+                            <!-- [修改] 檢查計畫篩選 (改為下拉選單) -->
+                            <div class="search-item" style="flex:1.5; min-width: 200px;">
+                                <label>檢查計畫</label>
+                                <select id="filterPlan" class="filter-select" onchange="applyFilters()">
+                                    <option value="">全部計畫</option>
+                                    <!-- JavaScript 會自動產生選項 -->
+                                </select>
+                            </div>
+
+                            <div class="search-item"><label>年度</label><select id="filterYear"
+                                    class="filter-select"></select></div>
+                            <div class="search-item"><label>機構</label><select id="filterUnit"
+                                    class="filter-select"></select></div>
+                            <div class="search-item"><label>狀態</label><select id="filterStatus" class="filter-select">
+                                    <option value="">全部狀態</option>
+                                    <option value="持續列管">持續列管</option>
+                                    <option value="解除列管">解除列管</option>
+                                    <option value="自行列管">自行列管</option>
+                                </select></div>
+                            <div style="display:flex;gap:8px;align-self:flex-end;">
+                                <button class="btn btn-primary" onclick="applyFilters()">搜尋</button>
+                                <button class="btn btn-outline" onclick="resetFilters()">重設</button>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Filters Toggle -->
+                        <div style="display:flex; justify-content:flex-start; padding-top:8px;">
+                            <button type="button" class="btn-link" onclick="toggleAdvancedFilters(this)">⬇️
+                                顯示更多篩選條件</button>
+                        </div>
+
+                        <div id="advancedFilters" class="filter-advanced-row">
+                            <div class="search-item"><label>檢查種類</label><select id="filterInspection"
+                                    class="filter-select">
+                                    <option value="">全部檢查種類</option>
+                                    <option value="定期檢查">定期檢查</option>
+                                    <option value="例行性檢查">例行性檢查</option>
+                                    <option value="特別檢查">特別檢查</option>
+                                    <option value="臨時檢查">臨時檢查</option>
+                                </select></div>
+                            <div class="search-item"><label>開立類型</label><select id="filterKind" class="filter-select">
+                                    <option value="">全部類型</option>
+                                    <option value="N">缺失事項</option>
+                                    <option value="O">觀察事項</option>
+                                    <option value="R">建議事項</option>
+                                </select></div>
+                            <div class="search-item"><label>分組</label><select id="filterDivision" class="filter-select">
+                                    <option value="">全部分組</option>
+                                    <option value="運務">運務 (A)</option>
+                                    <option value="工務">工務 (B)</option>
+                                    <option value="機務">機務 (C)</option>
+                                    <option value="電務">電務 (D)</option>
+                                    <option value="安全">安全 (E)</option>
+                                    <option value="審核">審核 (F)</option>
+                                    <option value="災防">災防 (G)</option>
+                                    <option value="運轉">運轉 (OP)</option>
+                                    <option value="土木">土木 (CP)</option>
+                                    <option value="機電">機電 (EM)</option>
+                                    <option value="土建">土建 (CV)</option>
+                                    <option value="安全管理">安全管理 (SM)</option>
+                                    <option value="營運">營運 (AD)</option>
+                                    <option value="其他">其他 (OT)</option>
+                                </select></div>
+                        </div>
+
+                        <div class="control-row-actions">
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <div id="batchActionContainer" style="display:none;">
+                                    <button class="btn btn-danger btn-sm" onclick="batchDeleteIssues()">
+                                        批次刪除 <span id="selectedCountBadge"></span>
+                                    </button>
+                                </div>
+                                <div style="font-size:13px;color:#64748b;display:flex;align-items:center;gap:6px;">
+                                    <span id="dataTimestamp">...</span>
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                                <div style="font-size:13px; color:#64748b; font-weight:500;">共 <span
+                                        id="issuesTotalCount" style="color:#0f172a;font-weight:700;">0</span> 筆</div>
+                                <select id="issuesPageSizeTop" class="page-size-select"
+                                    onchange="onIssuesPageSizeChange(this.value)">
+                                    <option value="10">10 筆/頁</option>
+                                    <option value="20" selected>20 筆/頁</option>
+                                    <option value="50">50 筆/頁</option>
+                                </select>
+                                <div id="issuesPaginationTop" class="pagination-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-container">
+                        <table id="dataTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px; display:none;" class="manager-col"><input type="checkbox"
+                                            id="selectAll" onclick="toggleAllCheckboxes()"></th>
+                                    <th style="width:70px" onclick="sortData('year')">年度</th>
+                                    <th style="width:130px" onclick="sortData('number')">編號</th>
+                                    <th style="width:80px" onclick="sortData('unit')">機構</th>
+                                    <th style="width:130px" onclick="sortData('status')">狀態與類型</th>
+                                    <th onclick="sortData('content')">事項內容</th>
+                                    <th onclick="sortData('latest')">最新辦理/審查情形</th>
+                                    <th style="width:150px">管理功能</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div
+                    style="display:flex; justify-content:flex-end; margin-top:24px; align-items:center; gap:12px; padding-right:24px; padding-bottom: 40px;">
+                    <select id="issuesPageSizeBottom" class="page-size-select"
+                        onchange="onIssuesPageSizeChange(this.value)">
+                        <option value="10">10 筆/頁</option>
+                        <option value="20" selected>20 筆/頁</option>
+                        <option value="50">50 筆/頁</option>
+                    </select>
+                    <div id="issuesPaginationBottom" class="pagination-bar"></div>
+                </div>
+
+                <div id="emptyMsg" style="text-align:center;padding:40px;color:#999;display:none;">查無資料</div>

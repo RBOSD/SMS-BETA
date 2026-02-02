@@ -1,0 +1,67 @@
+<div class="content-header">
+    <div class="content-title">檢查行程檢索</div>
+</div>
+<div class="main-card" style="margin-bottom:20px;">
+    <div style="margin-bottom:16px;">
+        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:12px;">
+            <h3 style="margin:0; font-weight:700; font-size:18px; color:#334155;">📊 檢查行程統計</h3>
+            <div style="display:flex; align-items:center; gap:6px;">
+                <label style="font-size:14px; color:#475569; font-weight:500;">選擇年度：</label>
+                <select id="dashboardYearSelect" class="filter-select" style="width:120px;" onchange="onDashboardYearChange()">
+                    <option value="">載入中…</option>
+                </select>
+            </div>
+        </div>
+        <p style="margin:8px 0 0 0; color:#64748b; font-size:13px;">選擇年度後顯示該年度統計資料與月曆。</p>
+    </div>
+    <div id="calendarDashboardStats" class="stats-bar dashboard-stats-cards" style="display:flex; flex-wrap:wrap; gap:16px; margin-bottom:24px;">
+        <div class="stat-item dashboard-stat-card" style="min-width:120px; background:linear-gradient(135deg,#eef2ff 0%,#e0e7ff 100%); border:1px solid #c7d2fe; border-radius:12px; padding:14px 18px;">
+            <div class="stat-val" style="color:#4338ca; font-size:1.5rem; font-weight:700;" id="dashboardStatPlans">-</div>
+            <div class="stat-label" style="color:#4f46e5; font-weight:600;">計畫</div>
+        </div>
+        <div class="stat-item dashboard-stat-card" style="min-width:120px; background:linear-gradient(135deg,#fef3c7 0%,#fde68a 100%); border:1px solid #fcd34d; border-radius:12px; padding:14px 18px;">
+            <div class="stat-val" style="color:#b45309; font-size:1.5rem; font-weight:700;" id="dashboardStatPlanned">-</div>
+            <div class="stat-label" style="color:#d97706; font-weight:600;">規劃次數</div>
+        </div>
+        <div class="stat-item dashboard-stat-card" style="min-width:120px; background:linear-gradient(135deg,#ecfdf5 0%,#d1fae5 100%); border:1px solid #a7f3d0; border-radius:12px; padding:14px 18px;">
+            <div class="stat-val" style="color:#047857; font-size:1.5rem; font-weight:700;" id="dashboardStatSchedules">-</div>
+            <div class="stat-label" style="color:#059669; font-weight:600;">已檢查次數</div>
+        </div>
+    </div>
+    <div style="margin-bottom:16px; font-weight:600; font-size:14px; color:#475569;">依檢查類別統計（已檢查次數）</div>
+    <div id="dashboardStatByType" style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:24px;">
+        <span style="color:#64748b; font-size:13px;">請先選擇年度</span>
+    </div>
+    <div style="margin-bottom:16px; font-weight:600; font-size:14px; color:#475569;">計畫進度統計</div>
+    <div id="dashboardPlanProgress" style="overflow-x:auto; -webkit-overflow-scrolling: touch;">
+        <table class="user-table dashboard-progress-table" style="font-size:13px; min-width:100%;">
+            <thead>
+                <tr>
+                    <th style="padding:10px; white-space:nowrap;">年度</th>
+                    <th style="padding:10px; white-space:nowrap;">計畫名稱</th>
+                    <th style="padding:10px; white-space:nowrap;">規劃次數</th>
+                    <th style="padding:10px; white-space:nowrap;">已檢查次數</th>
+                    <th style="padding:10px; white-space:nowrap;">進度</th>
+                </tr>
+            </thead>
+            <tbody id="dashboardPlanProgressBody"></tbody>
+        </table>
+    </div>
+</div>
+<!-- 月曆區（所有人可查看，僅顯示不編輯） -->
+<div class="main-card" style="margin-top:20px;">
+    <div style="margin-bottom:16px;">
+        <h3 style="margin:0 0 8px 0; font-weight:700; font-size:18px; color:#334155;">📅 檢查行程月曆</h3>
+        <p style="margin:0; color:#64748b; font-size:13px;">顯示已排程的檢查計畫，供所有人查看。</p>
+    </div>
+    <div class="schedule-calendar-toolbar" style="display:flex; align-items:center; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
+        <button type="button" class="btn btn-outline" id="dashboardSchedulePrevMonth" onclick="dashboardSchedulePrevMonth()">◀ 上個月</button>
+        <span id="dashboardScheduleMonthTitle" style="font-weight:700; font-size:16px; color:#334155;">— 年 — 月</span>
+        <button type="button" class="btn btn-outline" id="dashboardScheduleNextMonth" onclick="dashboardScheduleNextMonth()">下個月 ▶</button>
+    </div>
+    <div id="dashboardScheduleCalendar" class="schedule-calendar"></div>
+    <div id="dashboardScheduleDayList" style="margin-top:16px; padding:16px; background:#f8fafc; border-radius:10px; border:1px solid #e2e8f0;">
+        <div style="font-weight:600; font-size:14px; color:#334155; margin-bottom:8px;">當日排程（點選月曆日期後顯示）</div>
+        <div id="dashboardScheduleDayListBody" style="font-size:13px; color:#64748b;">點選月曆上的日期可查看該日詳細檢查內容</div>
+    </div>
+</div>

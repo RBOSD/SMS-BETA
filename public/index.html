@@ -1,0 +1,681 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    <title>SMS開立事項查詢與AI審查系統</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&display=swap"
+        rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <link rel="stylesheet" href="/styles.css">
+    <link rel="icon" href="data:,">
+</head>
+
+<body>
+    <div id="toast-container"></div>
+
+    <header class="app-header">
+        <div class="brand" onclick="switchView('searchView')" title="回到開立事項檢索">
+            <button class="filter-toggle-btn" onclick="event.stopPropagation();onToggleSidebar()"
+                title="開啟選單" aria-label="開啟選單">☰</button>
+            <div class="brand-icon">🚄</div>
+            <div class="brand-title">SMS開立事項查詢與AI審查系統</div>
+        </div>
+        <div class="user-menu-container">
+            <div class="user-capsule" onclick="toggleUserMenu()">
+                <div class="user-name" id="headerUserName">...</div>
+                <div class="user-role" id="headerUserRole">...</div>
+                <div style="font-size:10px; color:#94a3b8;">▼</div>
+            </div>
+            <div class="user-dropdown" id="userDropdown">
+                <button class="dropdown-item" onclick="openProfileModal()">⚙️ 個人設定</button>
+                <div class="dropdown-divider"></div>
+                <button class="dropdown-item" style="color:#ef4444;" onclick="logout()">登出系統</button>
+            </div>
+        </div>
+    </header>
+
+    <div class="app-body" id="appBody">
+        <aside class="filters-panel" id="filtersPanel">
+            <div class="sidebar-header">
+                <div class="sidebar-title">功能選單</div>
+                <button class="sidebar-close-btn" onclick="onToggleSidebar()" aria-label="關閉選單">×</button>
+            </div>
+            <button class="sidebar-btn active" id="btn-searchView" onclick="switchView('searchView')">
+                開立事項檢索</button>
+            <button class="sidebar-btn hidden" id="btn-planCalendarView" onclick="switchView('planCalendarView')">
+                檢查行程檢索</button>
+            <button class="sidebar-btn hidden" id="btn-importView" onclick="switchView('importView')">
+                資料管理</button>
+            <button class="sidebar-btn hidden" id="btn-usersView" onclick="switchView('usersView')">
+                後台管理</button>
+        </aside>
+
+        <div id="filterBackdrop" onclick="onToggleSidebar()"></div>
+
+        <main class="main-content">
+            <div id="searchView" class="view-section active">
+                <div class="content-header">
+                    <div class="content-title">開立事項檢索</div>
+                </div>
+                <div style="display:flex; justify-content:flex-end; margin-bottom:12px;">
+                    <button class="dashboard-toggle-btn" onclick="toggleDashboard(this)" title="收合/展開統計圖表">
+                        <span class="toggle-icon">▲</span>
+                    </button>
+                </div>
+
+                <div id="dashboardSection" class="dashboard-section">
+                    <div class="stats-bar">
+                        <div class="stat-item">
+                            <div class="stat-val" style="color:#6366f1" id="countTotal">0</div>
+                            <div class="stat-label">總開立事項</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" style="color:#ef4444" id="countActive">0</div>
+                            <div class="stat-label">列管中</div>
+                        </div>
+                        <div class="stat-item">
+                            <div class="stat-val" style="color:#10b981" id="countResolved">0</div>
+                            <div class="stat-label">已解除/自行列管</div>
+                        </div>
+                    </div>
+                    <div class="charts-grid">
+                        <div class="chart-card">
+                            <div><canvas id="statusChart"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div style="height:250px;width:100%;"><canvas id="unitChart"></canvas></div>
+                        </div>
+                        <div class="chart-card">
+                            <div style="height:250px;width:100%;"><canvas id="trendChart"></canvas></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="main-card">
+                    <div class="integrated-controls">
+                        <!-- Optimized Filter Layout -->
+                        <div class="filter-primary-row">
+                            <div class="search-item" style="flex:2;">
+                                <label>關鍵字</label>
+                                <input type="text" id="filterKeyword" class="filter-input" placeholder="輸入關鍵字..." autocomplete="off">
+                            </div>
+
+                            <div class="search-item"><label>年度</label><select id="filterYear"
+                                    class="filter-select"></select></div>
+
+                            <!-- [修改] 檢查計畫篩選 (改為下拉選單) -->
+                            <div class="search-item" style="flex:1.5; min-width: 200px;">
+                                <label>檢查計畫</label>
+                                <select id="filterPlan" class="filter-select" onchange="applyFilters()">
+                                    <option value="">全部計畫</option>
+                                    <!-- JavaScript 會自動產生選項 -->
+                                </select>
+                            </div>
+                            <div class="search-item"><label>機構</label><select id="filterUnit"
+                                    class="filter-select"></select></div>
+                            <div class="search-item"><label>狀態</label><select id="filterStatus" class="filter-select">
+                                    <option value="">全部狀態</option>
+                                    <option value="持續列管">持續列管</option>
+                                    <option value="解除列管">解除列管</option>
+                                    <option value="自行列管">自行列管</option>
+                                </select></div>
+                            <div style="display:flex;gap:8px;align-self:flex-end;">
+                                <button class="btn btn-primary" onclick="applyFilters()">搜尋</button>
+                                <button class="btn btn-outline" onclick="resetFilters()">重設</button>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Filters Toggle -->
+                        <div style="display:flex; justify-content:flex-start; padding-top:8px;">
+                            <button type="button" class="btn-link" onclick="toggleAdvancedFilters(this)">⬇️
+                                顯示更多篩選條件</button>
+                        </div>
+
+                        <div id="advancedFilters" class="filter-advanced-row">
+                            <div class="search-item"><label>檢查種類</label><select id="filterInspection"
+                                    class="filter-select">
+                                    <option value="">全部檢查種類</option>
+                                    <option value="定期檢查">定期檢查</option>
+                                    <option value="例行性檢查">例行性檢查</option>
+                                    <option value="特別檢查">特別檢查</option>
+                                    <option value="臨時檢查">臨時檢查</option>
+                                </select></div>
+                            <div class="search-item"><label>開立類型</label><select id="filterKind" class="filter-select">
+                                    <option value="">全部類型</option>
+                                    <option value="N">缺失事項</option>
+                                    <option value="O">觀察事項</option>
+                                    <option value="R">建議事項</option>
+                                </select></div>
+                            <div class="search-item"><label>分組</label><select id="filterDivision" class="filter-select">
+                                    <option value="">全部分組</option>
+                                    <option value="運務">運務 (A)</option>
+                                    <option value="工務">工務 (B)</option>
+                                    <option value="機務">機務 (C)</option>
+                                    <option value="電務">電務 (D)</option>
+                                    <option value="安全">安全 (E)</option>
+                                    <option value="審核">審核 (F)</option>
+                                    <option value="災防">災防 (G)</option>
+                                    <option value="運轉">運轉 (OP)</option>
+                                    <option value="土木">土木 (CP)</option>
+                                    <option value="機電">機電 (EM)</option>
+                                    <option value="土建">土建 (CV)</option>
+                                    <option value="安全管理">安全管理 (SM)</option>
+                                    <option value="營運">營運 (AD)</option>
+                                    <option value="其他">其他 (OT)</option>
+                                </select></div>
+                        </div>
+
+                        <div class="control-row-actions">
+                            <div style="display:flex; gap:12px; align-items:center;">
+                                <div id="batchActionContainer" style="display:none;">
+                                    <button class="btn btn-danger btn-sm" onclick="batchDeleteIssues()">
+                                        批次刪除 <span id="selectedCountBadge"></span>
+                                    </button>
+                                </div>
+                                <div style="font-size:13px;color:#64748b;display:flex;align-items:center;gap:6px;">
+                                    <span id="dataTimestamp">...</span>
+                                </div>
+                            </div>
+                            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+                                <div style="font-size:13px; color:#64748b; font-weight:500;">共 <span
+                                        id="issuesTotalCount" style="color:#0f172a;font-weight:700;">0</span> 筆</div>
+                                <select id="issuesPageSizeTop" class="page-size-select"
+                                    onchange="onIssuesPageSizeChange(this.value)">
+                                    <option value="10">10 筆/頁</option>
+                                    <option value="20" selected>20 筆/頁</option>
+                                    <option value="50">50 筆/頁</option>
+                                </select>
+                                <div id="issuesPaginationTop" class="pagination-bar"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="data-container">
+                        <table id="dataTable">
+                            <thead>
+                                <tr>
+                                    <th style="width:40px; display:none;" class="manager-col"><input type="checkbox"
+                                            id="selectAll" onclick="toggleAllCheckboxes()"></th>
+                                    <th style="width:70px" onclick="sortData('year')">年度</th>
+                                    <th style="width:130px" onclick="sortData('number')">編號</th>
+                                    <th style="width:80px" onclick="sortData('unit')">機構</th>
+                                    <th style="width:130px" onclick="sortData('status')">狀態與類型</th>
+                                    <th onclick="sortData('content')">事項內容</th>
+                                    <th onclick="sortData('latest')">最新辦理/審查情形</th>
+                                    <th style="width:120px">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dataBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div
+                    style="display:flex; justify-content:flex-end; margin-top:24px; align-items:center; gap:12px; padding-right:24px; padding-bottom: 40px;">
+                    <select id="issuesPageSizeBottom" class="page-size-select"
+                        onchange="onIssuesPageSizeChange(this.value)">
+                        <option value="10">10 筆/頁</option>
+                        <option value="20" selected>20 筆/頁</option>
+                        <option value="50">50 筆/頁</option>
+                    </select>
+                    <div id="issuesPaginationBottom" class="pagination-bar"></div>
+                </div>
+
+                <div id="emptyMsg" style="text-align:center;padding:40px;color:#999;display:none;">查無資料</div>
+            </div>
+
+            <div id="planCalendarView" class="view-section">
+                <!-- 檢查行程檢索，由 switchView 動態載入 -->
+            </div>
+            <div id="importView" class="view-section">
+                <!-- 內容將由 switchView 函數動態載入 -->
+            </div>
+    <div id="usersView" class="view-section">
+        <!-- 內容將由 switchView 函數動態載入 -->
+    </div>
+
+            <!-- 匯入預覽（共用：Word 匯入 / 資料救援） -->
+            <div id="previewContainer" class="hidden">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin:20px 0 12px; flex-wrap:wrap; gap:10px;">
+                    <h3 style="margin:0; font-weight:700; font-size:18px; color:#334155;">
+                        解析結果預覽 (<span id="previewCount" style="color:var(--primary);">0</span> 筆) <span id="previewModeBadge"></span>
+                    </h3>
+                    <div style="display:flex;gap:10px; flex-wrap:wrap;">
+                        <button class="btn btn-outline" onclick="cancelImport()">取消</button>
+                        <button class="btn btn-primary" onclick="confirmImport()">上傳至資料庫</button>
+                    </div>
+                </div>
+                <div class="main-card">
+                    <div class="data-container">
+                        <table class="preview-table">
+                            <thead>
+                                <tr>
+                                    <th>操作</th>
+                                    <th>編號</th>
+                                    <th>機構</th>
+                                    <th>事項內容</th>
+                                    <th>辦理/審查內容</th>
+                                </tr>
+                            </thead>
+                            <tbody id="previewBody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+    </main>
+    </div>
+
+    <!-- Drawer & Modal -->
+    <div class="drawer-backdrop" id="drawerBackdrop"></div>
+    <div class="drawer" id="detailDrawer">
+        <div class="drawer-header">
+            <div style="font-weight:700;font-size:18px;" id="drawerTitle">詳細資料</div><button onclick="closeDrawer()"
+                style="border:none;background:none;font-size:24px;color:#64748b;cursor:pointer;" aria-label="關閉詳細資料">&times;</button>
+        </div>
+        <div class="drawer-body">
+            <div id="viewModeContent">
+                <!-- NEW: 單行資訊條設計 -->
+                <div class="detail-card">
+                    <div class="detail-header-row">
+                        <span class="detail-number" id="dNumber"></span>
+                        <span class="separator">|</span>
+                        <span style="font-weight:500;" id="dPlanName"></span>
+                        <span class="separator">|</span>
+                        <span style="color:#64748b;" id="dInspection"></span>
+                        <span class="separator">|</span>
+                        <span id="dStatus"></span>
+                        <span class="separator">|</span>
+                        <span style="color:#64748b;" id="dDivision"></span>
+                        <span class="separator">|</span>
+                        <span style="color:#64748b;">發函: <span id="dIssueDate"
+                                style="color:#334155;font-weight:500;"></span></span>
+                    </div>
+
+                    <div
+                        style="margin-bottom: 8px; font-size:12px; font-weight:600; color:#64748b; text-transform:uppercase;">
+                        事項內容</div>
+                    <div class="content-text" id="dContent"></div>
+                </div>
+
+                <div
+                    style="font-weight:700;margin:24px 0 20px;font-size:18px;color:#0f172a;display:flex;align-items:center;gap:8px;">
+                    歷程紀錄
+                </div>
+
+                <div id="dTimeline" style="position: relative;"></div>
+
+                <div style="margin-top:40px; display:flex; flex-direction:column; gap:12px;">
+                    <button class="btn btn-primary hidden" id="editBtn" style="width:100%;padding:14px;font-size:15px;"
+                        onclick="toggleEditMode(true)">✏️ 審查</button>
+                    <button class="btn btn-outline hidden" id="editorsBtnDrawer"
+                        style="width:100%;padding:14px;font-size:15px;" onclick="openIssueEditorsModalFromDrawer()">👥 協作編修人員</button>
+                    <button class="btn btn-danger hidden" id="deleteBtnDrawer"
+                        style="width:100%;padding:14px;font-size:15px;" onclick="deleteIssueFromDrawer()">🗑️
+                        刪除此項目</button>
+                </div>
+            </div>
+            <div id="editModeContent" class="hidden" style="height:100%;">
+                <input type="hidden" id="editId">
+                <div class="detail-card" style="margin-bottom:20px;">
+                    <div class="detail-header-row" style="border-bottom:none;padding-bottom:0;margin-bottom:0;">
+                        <span class="detail-number" id="editHeaderNumber"></span>
+                        <span class="separator">|</span>
+                        <span style="font-weight:500;" id="editHeaderPlanName"></span>
+                        <span class="separator">|</span>
+                        <span style="color:#64748b;" id="editHeaderInspection"></span>
+                        <span class="separator">|</span>
+                        <span id="editHeaderStatusKind"></span>
+                        <span class="separator">|</span>
+                        <span style="color:#64748b;" id="editHeaderDivision"></span>
+                        <span class="separator">|</span>
+                        <span style="color:#64748b;">發函: <span id="editHeaderIssueDate"
+                                style="color:#334155;font-weight:500;"></span></span>
+                    </div>
+                </div>
+                <div class="review-grid">
+                    <div class="review-left">
+                        <!-- 參考資料區（只讀）：開立事項內容、前次審查意見 -->
+                        <div style="margin-bottom:24px;">
+                            <div style="font-size:13px;color:#64748b;margin-bottom:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;">📋 參考資料</div>
+                            
+                            <!-- 開立事項內容 -->
+                            <div style="margin-bottom:16px;">
+                                <div style="font-size:13px;color:#475569;margin-bottom:6px;font-weight:600;">開立事項內容</div>
+                                <div style="background:#f8fafc;padding:16px;border-radius:12px;font-size:14px;line-height:1.6;border:1px solid #e2e8f0;max-height:250px;overflow-y:auto;"
+                                    id="editContentDisplay"></div>
+                            </div>
+
+                            <!-- [新增] 選擇查看哪一次的審查及回復內容 -->
+                            <div style="margin-bottom:16px;">
+                                <div style="font-size:13px;color:#475569;margin-bottom:6px;font-weight:600;">選擇查看內容</div>
+                                <select id="viewRoundSelect" class="filter-select" onchange="onViewRoundChange()" style="font-size:14px;padding:6px;">
+                                    <option value="latest">最新進度</option>
+                                    <!-- JavaScript 會自動產生選項 -->
+                                </select>
+                            </div>
+                            
+                            <!-- 查看的審查意見（根據選擇顯示） -->
+                            <div id="viewReviewBox" style="display:none; margin-bottom:16px;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                    <div style="font-size:12px;color:#6366f1;font-weight:700;">👀 第<span id="viewReviewRoundNum"></span>次審查意見：</div>
+                                    <div style="font-size:11px;color:#64748b;" id="viewReviewDate"></div>
+                                </div>
+                                <div style="background:#eef2ff;padding:12px;border-radius:8px;font-size:14px;color:#4338ca;border:1px solid #c7d2fe;line-height:1.5;max-height:200px;overflow-y:auto;white-space:pre-wrap;"
+                                    id="viewReviewText"></div>
+                            </div>
+                            
+                            <!-- 查看的機構辦理情形（根據選擇顯示） -->
+                            <div id="viewHandlingBox" style="display:none; margin-bottom:0;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                                    <div style="font-size:12px;color:#059669;font-weight:700;">📝 第<span id="viewHandlingRoundNum"></span>次機構辦理情形：</div>
+                                    <div style="font-size:11px;color:#64748b;" id="viewHandlingDate"></div>
+                                </div>
+                                <div style="background:#ecfdf5;padding:12px;border-radius:8px;font-size:14px;color:#047857;border:1px solid #a7f3d0;line-height:1.5;max-height:200px;overflow-y:auto;white-space:pre-wrap;"
+                                    id="viewHandlingText"></div>
+                            </div>
+                        </div>
+
+                        <!-- 機構辦理情形輸入框（隱藏，但保留用於儲存） -->
+                        <textarea id="editHandling" style="display:none;"></textarea>
+                    </div>
+                    <div class="review-right">
+                        <!-- 參考資料：當前回合機構辦理情形（只讀顯示） -->
+                        <div style="margin-bottom:24px; background:#f8fafc; padding:16px; border-radius:10px; border:1px solid #e2e8f0;">
+                            <div style="font-size:12px;color:#64748b;margin-bottom:10px;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">📋 參考資料</div>
+                            <div style="font-size:13px;color:#475569;margin-bottom:8px;font-weight:600;">第 <span id="currentHandlingRoundNum">1</span> 次機構辦理情形</div>
+                            <div id="currentHandlingDisplay" style="background:#ffffff;padding:12px;border-radius:8px;font-size:14px;color:#334155;border:1px solid #cbd5e1;line-height:1.6;min-height:80px;max-height:200px;overflow-y:auto;white-space:pre-wrap;"
+                                >（尚未有機構辦理情形）</div>
+                        </div>
+                        
+                        <!-- 隱藏的處理欄位（用於儲存） -->
+                        <textarea id="editHandling" style="display:none;"></textarea>
+
+                        <!-- 審查作業區：統一的輸入區塊 -->
+
+                        <!-- 審查作業區：統一的輸入區塊 -->
+                        <div style="background:#ffffff; padding:20px; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 2px 8px rgba(0,0,0,0.04); margin-bottom:20px;">
+                            <div style="font-size:13px;color:#1e293b;margin-bottom:20px;font-weight:600;display:flex;align-items:center;gap:8px;padding-bottom:12px;border-bottom:2px solid #f1f5f9;">
+                                ✍️ 審查作業
+                                <span style="font-size:11px;color:#ef4444;font-weight:400;margin-left:4px;">(必填)</span>
+                            </div>
+
+                            <!-- 審查輪次設定 -->
+                            <div style="margin-bottom:20px;">
+                                <div style="font-size:13px;color:#475569;margin-bottom:6px;font-weight:600;">審查輪次</div>
+                                <span id="editRoundDisplay" style="display:inline-block;padding:10px 14px;background:#f1f5f9;border-radius:8px;border:1px solid #e2e8f0;color:#334155;font-weight:500;font-size:13px;min-width:80px;text-align:center;">第 1 次</span>
+                                <input type="hidden" id="editRound" value="1">
+                            </div>
+
+                            <!-- 審查結果 -->
+                            <div style="margin-bottom:20px;">
+                                <div style="font-size:13px;color:#475569;margin-bottom:6px;font-weight:600;">審查結果</div>
+                                <select id="editStatus" class="filter-select" style="width:100%;padding:10px;border:1px solid #cbd5e1;background:#fff;font-size:14px;">
+                                    <option value="持續列管">🔴 持續列管</option>
+                                    <option value="解除列管">🟢 解除列管</option>
+                                    <option value="自行列管">🟠 自行列管</option>
+                                </select>
+                            </div>
+
+                            <!-- 審查意見 -->
+                            <div style="flex:1;display:flex;flex-direction:column;">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                                    <div style="font-size:13px;color:#475569;font-weight:600;">審查意見</div>
+                                    <button class="btn btn-ai" style="padding:4px 10px;font-size:11px;" onclick="runAiInEdit(this)">🤖 AI 智能分析</button>
+                                </div>
+                                <div id="aiBox"
+                                    style="background:#f0f9ff;padding:16px;border-radius:8px;border:1px solid #bae6fd;margin-bottom:16px;display:none;">
+                                    <div style="font-size:13px;margin-bottom:8px;font-weight:bold;color:#0369a1;">💡 AI 分析建議：</div>
+                                    <div id="aiPreviewText"
+                                        style="background:white; padding:12px; border:1px solid #e0f2fe; border-radius:6px; font-size:14px; margin-bottom:12px; line-height:1.6; color:#334155;">
+                                    </div>
+                                    <div style="display:flex; align-items:center; justify-content:space-between;"><span
+                                            id="aiResBadge" style="font-size:13px;"></span><button class="btn btn-primary"
+                                            style="font-size:12px;padding:6px 14px;" onclick="applyAiSuggestion()">⬇️ 帶入此意見</button></div>
+                                </div>
+                                <textarea id="editReview" class="filter-input"
+                                    style="flex:1;resize:vertical;line-height:1.6;min-height:200px;padding:12px;border:1px solid #cbd5e1;font-size:14px;"
+                                    placeholder="請輸入審查意見..." autocomplete="off"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- 操作按鈕 -->
+                        <div style="display:flex;gap:12px;margin-top:auto;padding-top:16px;">
+                            <button class="btn btn-primary" style="flex:1;padding:12px;" onclick="saveEdit()">💾 上傳至資料庫</button>
+                            <button class="btn btn-outline" style="flex:1;padding:12px;" onclick="toggleEditMode(false)">取消</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="userModal">
+        <div class="modal-box">
+            <h3 style="margin-top:0;" id="userModalTitle">使用者</h3>
+            <input type="hidden" id="targetUserId">
+            <div class="form-group"><label>姓名</label><input type="text" id="uName" class="filter-input" autocomplete="off"></div>
+            <div class="form-group"><label>帳號 (Username)</label><input type="text" id="uEmail" class="filter-input" autocomplete="username">
+            </div>
+            <div class="form-group">
+                <label>密碼 <span style="font-weight:400;color:#666;font-size:12px" id="pwdHint"></span></label>
+                <div class="pwd-wrapper">
+                    <input type="password" id="uPwd" class="filter-input">
+                    <button class="pwd-toggle" onclick="togglePwdVisibility('uPwd', this)" aria-label="顯示/隱藏密碼">👁️</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>確認密碼</label>
+                <div class="pwd-wrapper">
+                    <input type="password" id="uPwdConfirm" class="filter-input">
+                    <button class="pwd-toggle" onclick="togglePwdVisibility('uPwdConfirm', this)" aria-label="顯示/隱藏確認密碼">👁️</button>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+                <div id="pwdStrength" style="font-size:13px;color:#666;">密碼強度: -</div>
+            </div>
+            <div class="form-group">
+                <label>權限</label>
+                <select id="uRole" class="filter-select">
+                    <option value="manager">資料管理者</option>
+                    <option value="viewer">檢視人員</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>群組（可多選）</label>
+                <div id="uGroupsBox" style="border:1px solid var(--border); border-radius:10px; padding:10px; background:#f8fafc; max-height:180px; overflow:auto;">
+                    <div style="color:#64748b;font-size:13px;">（載入中…）</div>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px;"><button class="btn btn-primary" style="width:100%"
+                    onclick="submitUser()">送出</button><button class="btn btn-outline" style="width:100%"
+                    onclick="document.getElementById('userModal').classList.remove('open')">取消</button></div>
+        </div>
+    </div>
+
+    <!-- Group rename modal -->
+    <div class="modal-overlay" id="groupModal">
+        <div class="modal-box" style="max-width:520px;">
+            <h3 style="margin-top:0;">群組更名</h3>
+            <input type="hidden" id="targetGroupId">
+            <div class="form-group">
+                <label>群組名稱</label>
+                <input type="text" id="groupNameInput" class="filter-input" autocomplete="off">
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn btn-primary" style="width:100%" onclick="submitGroupRename()">儲存</button>
+                <button class="btn btn-outline" style="width:100%" onclick="closeGroupModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 協作編修人員 Modal（開立事項 / 檢查計畫共用） -->
+    <div class="modal-overlay" id="editorsModal">
+        <div class="modal-box" style="max-width:760px; width:95%; max-height:85vh; overflow:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center; gap:12px;">
+                <h3 style="margin:0;" id="editorsModalTitle">協作編修人員</h3>
+                <button onclick="closeEditorsModal()" style="border:none;background:none;font-size:24px;color:#64748b;cursor:pointer;" aria-label="關閉協作編修">×</button>
+            </div>
+            <div id="editorsModalSubtitle" style="margin-top:8px; color:#64748b; font-size:13px; line-height:1.6;"></div>
+            <input type="hidden" id="editorsTargetType">
+            <input type="hidden" id="editorsTargetId">
+            <div class="form-group" style="margin-top:14px;">
+                <label>搜尋使用者</label>
+                <input type="text" id="editorsUserSearch" class="filter-input" placeholder="輸入姓名或帳號..." autocomplete="off" oninput="renderEditorsUserList()">
+            </div>
+            <div id="editorsUsersBox" style="border:1px solid var(--border); border-radius:12px; padding:12px; background:#f8fafc; max-height:55vh; overflow:auto;">
+                <div style="color:#64748b;font-size:13px;">（載入中…）</div>
+            </div>
+            <div style="display:flex;gap:12px;margin-top:18px;">
+                <button class="btn btn-primary" style="flex:1;" onclick="saveEditorsSelection()">儲存</button>
+                <button class="btn btn-outline" style="flex:1;" onclick="closeEditorsModal()">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="profileModal">
+        <div class="modal-box">
+            <h3 style="margin-top:0;">個人設定</h3>
+            <div class="form-group"><label>姓名</label><input type="text" id="myProfileName" class="filter-input" autocomplete="off"></div>
+            <div class="form-group">
+                <label>新密碼 <span style="font-weight:400;color:#666;font-size:12px">(若不修改請留空)</span></label>
+                <div class="pwd-wrapper">
+                    <input type="password" id="myProfilePwd" class="filter-input">
+                    <button class="pwd-toggle" onclick="togglePwdVisibility('myProfilePwd', this)" aria-label="顯示/隱藏密碼">👁️</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>確認新密碼</label>
+                <div class="pwd-wrapper">
+                    <input type="password" id="myProfilePwdConfirm" class="filter-input">
+                    <button class="pwd-toggle" onclick="togglePwdVisibility('myProfilePwdConfirm', this)" aria-label="顯示/隱藏確認密碼">👁️</button>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:20px;"><button class="btn btn-primary" style="width:100%"
+                    onclick="submitProfile()">更新</button><button class="btn btn-outline" style="width:100%"
+                    onclick="document.getElementById('profileModal').classList.remove('open')">取消</button></div>
+        </div>
+    </div>
+
+    <!-- Preview modal -->
+    <div class="modal-overlay" id="previewModal">
+        <div class="modal-box" id="previewBox" style="max-width:800px; width:90%; max-height:80vh; overflow:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <h3 id="previewTitle">內容預覽</h3><button onclick="closePreview()"
+                    style="border:none;background:none;font-size:20px;" aria-label="關閉預覽">&times;</button>
+            </div>
+            <div id="previewContent" style="margin-top:12px;"></div>
+        </div>
+    </div>
+
+    <!-- 批次模式事項內容編輯 Modal -->
+    <div class="modal-overlay" id="batchContentModal" style="display:none;">
+        <div class="modal-box" style="max-width:800px; width:95%; max-height:85vh; overflow:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center; margin-bottom:20px;">
+                <h3 style="margin:0;">編輯事項內容 - <span id="batchContentModalNumber"></span></h3>
+                <button onclick="closeBatchContentModal()" style="border:none;background:none;font-size:24px;color:#64748b;cursor:pointer;" aria-label="關閉編輯事項內容">×</button>
+            </div>
+            <div style="margin-bottom:20px;">
+                <label style="display:block; font-size:14px; font-weight:500; color:#334155; margin-bottom:8px;">事項內容：</label>
+                <textarea id="batchContentModalTextarea" class="filter-input" 
+                    style="width:100%; min-height:200px; padding:12px; font-size:14px; line-height:1.6; resize:vertical;"
+                    placeholder="請輸入事項內容..."></textarea>
+            </div>
+            <div style="display:flex; gap:12px; margin-top:24px; padding-top:20px; border-top:1px solid #e2e8f0;">
+                <button class="btn btn-primary" onclick="saveBatchContent()" style="flex:1; padding:12px;">儲存</button>
+                <button class="btn btn-outline" onclick="closeBatchContentModal()" style="flex:1; padding:12px;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 批次模式辦理情形管理 Modal -->
+    <div class="modal-overlay" id="batchHandlingModal">
+        <div class="modal-box" style="max-width:900px; width:95%; max-height:85vh; overflow:auto;">
+            <div style="display:flex;justify-content:space-between;align-items:center; margin-bottom:20px;">
+                <h3 style="margin:0;">管理辦理情形 - <span id="batchHandlingModalNumber"></span></h3>
+                <button onclick="closeBatchHandlingModal()" style="border:none;background:none;font-size:24px;color:#64748b;cursor:pointer;" aria-label="關閉管理辦理情形">×</button>
+            </div>
+            <div style="background:#f8fafc; padding:16px; border-radius:8px; margin-bottom:20px; border:1px solid #e2e8f0;">
+                <div style="font-size:13px; color:#64748b;">
+                    💡 可為此筆事項新增多次辦理情形（選填）
+                </div>
+            </div>
+            <div style="margin-bottom:20px; display:flex; justify-content:flex-end;">
+                <button type="button" class="btn btn-outline" onclick="addBatchHandlingRound()" style="padding:8px 16px; font-size:13px;">
+                    ➕ 新增辦理情形
+                </button>
+            </div>
+            <div id="batchHandlingRoundsContainer" style="margin-bottom:20px;">
+                <!-- 辦理情形輪次將由 JavaScript 動態生成 -->
+            </div>
+            <div style="display:flex; gap:12px; margin-top:24px; padding-top:20px; border-top:1px solid #e2e8f0;">
+                <button class="btn btn-primary" onclick="saveBatchHandlingRounds()" style="flex:1; padding:12px;">💾 儲存辦理情形</button>
+                <button class="btn btn-outline" onclick="closeBatchHandlingModal()" style="flex:1; padding:12px;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 首次登入密碼更新 Modal -->
+    <div class="modal-overlay" id="changePasswordModal" style="display:none; z-index:10000;">
+        <div class="modal-box" style="max-width:500px; width:90%;">
+            <h3 style="margin-top:0; color:#dc2626;">⚠️ 首次登入，請更新密碼</h3>
+            <div style="background:#fef2f2; padding:12px; border-radius:8px; margin-bottom:20px; border:1px solid #fecaca;">
+                <div style="font-size:14px; color:#991b1b;">
+                    為了您的帳號安全，請設定一個新的密碼。密碼必須符合以下要求：
+                </div>
+                <ul style="margin:8px 0 0 20px; font-size:13px; color:#7f1d1d;">
+                    <li>至少 8 個字元</li>
+                    <li>包含至少一個大寫字母</li>
+                    <li>包含至少一個小寫字母</li>
+                    <li>包含至少一個數字</li>
+                </ul>
+            </div>
+            <div class="form-group">
+                <label>新密碼</label>
+                <div class="pwd-wrapper">
+                    <input type="password" id="changePwdNew" class="filter-input" autocomplete="new-password">
+                    <button class="pwd-toggle" onclick="togglePwdVisibility('changePwdNew', this)" aria-label="顯示/隱藏密碼">👁️</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>確認新密碼</label>
+                <div class="pwd-wrapper">
+                    <input type="password" id="changePwdConfirm" class="filter-input" autocomplete="new-password">
+                    <button class="pwd-toggle" onclick="togglePwdVisibility('changePwdConfirm', this)" aria-label="顯示/隱藏確認密碼">👁️</button>
+                </div>
+            </div>
+            <div id="changePwdError" style="color:#dc2626; font-size:13px; margin-bottom:12px; display:none;"></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn btn-primary" style="width:100%" onclick="submitChangePassword()">更新密碼</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 自訂確認對話框 Modal -->
+    <div class="modal-overlay" id="confirmModal" style="display:none;">
+        <div class="modal-box" style="max-width:500px; width:90%;">
+            <div style="display:flex;justify-content:space-between;align-items:center; margin-bottom:20px;">
+                <h3 style="margin:0; color:#334155;">確認操作</h3>
+                <button onclick="closeConfirmModal()" style="border:none;background:none;font-size:24px;color:#64748b;cursor:pointer;" aria-label="關閉確認對話框">×</button>
+            </div>
+            <div id="confirmModalMessage" style="font-size:15px; line-height:1.6; color:#475569; margin-bottom:24px; white-space: pre-line;">
+                <!-- 訊息內容將由 JavaScript 動態填入 -->
+            </div>
+            <div style="display:flex; gap:12px; margin-top:24px;">
+                <button class="btn btn-primary" id="confirmModalConfirmBtn" style="flex:1; padding:12px;">確認</button>
+                <button class="btn btn-outline" onclick="closeConfirmModal()" style="flex:1; padding:12px;">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/scripts.js"></script>
+</body>
+
+</html>

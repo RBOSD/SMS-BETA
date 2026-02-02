@@ -1,0 +1,3226 @@
+      /* 1. 基礎設定 */
+        html,
+        body {
+            min-height: 100vh;
+            overflow-x: hidden;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            display: none; /* JS 載入後會改為 flex */
+            font-family: 'Inter', 'Noto Sans TC', sans-serif;
+            background-color: #f8fafc;
+            flex-direction: column;
+        }
+
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --primary-gradient-start: #667eea;
+            --primary-gradient-end: #764ba2;
+            --bg-body: #f8fafc;
+            --bg-card: #ffffff;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --border: #e2e8f0;
+            --header-h: 60px;
+            --danger: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+        }
+
+        /* Header */
+        .app-header {
+            background: var(--bg-card);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: var(--header-h);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            z-index: 40;
+            width: 100%;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+            flex-shrink: 0;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-weight: 700;
+            font-size: 18px;
+            color: var(--text-main);
+            flex-shrink: 0;
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+
+        .brand:hover {
+            opacity: 0.8;
+        }
+
+        .brand-icon {
+            background: linear-gradient(135deg, #3b82f6, #2563eb);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            box-shadow: 0 2px 5px rgba(37, 99, 235, 0.2);
+            flex-shrink: 0;
+        }
+
+        .filter-toggle-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: #f1f5f9;
+            border: 1px solid transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 20px;
+            color: var(--text-main);
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .filter-toggle-btn:hover {
+            background: #e2e8f0;
+            color: var(--primary);
+        }
+
+        /* User Menu */
+        .user-menu-container {
+            position: relative;
+            max-width: 50%;
+        }
+
+        .user-capsule {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 16px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: all 0.2s;
+            max-width: 100%;
+        }
+
+        .user-capsule:hover {
+            background: #eff6ff;
+            border-color: #bfdbfe;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #334155;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 120px;
+        }
+
+        .user-role {
+            font-size: 11px;
+            color: #2563eb;
+            background: #dbeafe;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .user-dropdown {
+            position: absolute;
+            top: 130%;
+            right: 0;
+            width: 180px;
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            display: none;
+            flex-direction: column;
+            overflow: hidden;
+            z-index: 50;
+            padding: 6px;
+        }
+
+        .user-dropdown.show {
+            display: flex;
+        }
+
+        .dropdown-item {
+            padding: 10px 12px;
+            font-size: 14px;
+            color: #334155;
+            cursor: pointer;
+            transition: background 0.1s;
+            text-align: left;
+            border: none;
+            background: none;
+            width: 100%;
+            border-radius: 8px;
+        }
+
+        .dropdown-item:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+        }
+
+        .dropdown-divider {
+            height: 1px;
+            background: #f1f5f9;
+            margin: 4px 0;
+        }
+
+        /* Layout */
+        .app-body {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            position: relative;
+            min-height: calc(100vh - 60px);
+        }
+
+        /* Drawer Sidebar */
+        .filters-panel {
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            width: 280px;
+            background: var(--bg-card);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.1);
+            padding: 20px;
+            z-index: 1000;
+            transform: translateX(-100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            overflow-y: auto;
+        }
+
+        .filters-panel.open {
+            transform: translateX(0);
+        }
+
+        #filterBackdrop {
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(2px);
+            z-index: 999;
+            display: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        #filterBackdrop.visible {
+            display: block;
+            opacity: 1;
+        }
+
+        .sidebar-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .sidebar-close-btn {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-sub);
+            padding: 4px;
+        }
+
+        .sidebar-close-btn:hover {
+            color: var(--danger);
+        }
+
+        /* Main Content - 擴大頁面寬度 */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            background: var(--bg-body);
+            width: 100%;
+            max-width: 100%;
+            min-height: calc(100vh - 60px);
+        }
+        
+        /* 擴大主要卡片容器 */
+        .main-card {
+            max-width: 100%;
+            width: 100%;
+        }
+
+        .content-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+            padding: 20px 24px;
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(102, 126, 234, 0.3);
+            flex-shrink: 0;
+            min-height: 30px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .content-title {
+            font-size: 24px;
+            font-weight: 700;
+            color: #ffffff;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            letter-spacing: -0.5px;
+        }
+
+        /* 已移除：按鈕現在放在分頁內容內，不再需要特殊樣式 */
+
+        /* Dashboard */
+        .dashboard-section {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: visible; /* 改為 visible，確保圖表內容不被裁切 */
+            max-height: 1000px;
+            opacity: 1;
+            margin-bottom: 24px;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 1; /* 確保圖表區域在正確層級 */
+        }
+
+        .dashboard-section.collapsed {
+            max-height: 0;
+            opacity: 0;
+            margin-bottom: 0 !important;
+            overflow: hidden; /* 收合時使用 hidden */
+            padding-bottom: 0 !important;
+        }
+
+            .dashboard-toggle-btn {
+                background: white;
+                border: 1px solid var(--border);
+                border-radius: 6px;
+                padding: 6px 10px;
+                font-size: 14px;
+                cursor: pointer;
+                color: var(--text-sub);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 0;
+                transition: all 0.2s;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+                margin-left: auto;
+                min-width: 32px;
+                height: 32px;
+            }
+            
+            .dashboard-toggle-btn .toggle-icon {
+                font-size: 12px;
+                line-height: 1;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+
+        .dashboard-toggle-btn:hover {
+            background: #f8fafc;
+            color: var(--primary);
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .dashboard-toggle-btn:active {
+            transform: scale(0.95);
+        }
+
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-shrink: 0;
+        }
+
+        .stat-item {
+            background: white;
+            padding: 20px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+        }
+
+        .stat-val {
+            font-size: 28px;
+            font-weight: 800;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-sub);
+            font-weight: 500;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1.5fr;
+            gap: 16px;
+            margin-bottom: 20px;
+            flex-shrink: 0;
+            width: 100%;
+        }
+
+        .chart-card {
+            background: white;
+            border-radius: 16px;
+            padding: 24px;
+            border: 1px solid var(--border);
+            height: 300px;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.01), 0 2px 4px -1px rgba(0, 0, 0, 0.01);
+            position: relative;
+            box-sizing: border-box;
+        }
+        
+        .chart-card > div {
+            width: 100%;
+            height: 100%;
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            position: relative;
+        }
+
+        /* Main Card */
+        .main-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            margin-bottom: 24px;
+            transition: all 0.3s ease;
+            padding: 24px;
+        }
+        
+        /* 如果 main-card 的第一個直接子元素是 data-container（如檢查計畫管理頁面的表格），移除 main-card 的 padding */
+        .main-card > .data-container:first-child:last-child {
+            margin: -24px;
+            padding: 0;
+        }
+        
+        /* 如果 main-card 的第一個子元素已經有 padding（如檢查計畫管理頁面），讓它抵消 main-card 的上左右 padding */
+        .main-card > div[style*="padding"]:first-child {
+            margin-left: -24px;
+            margin-right: -24px;
+            margin-top: -24px;
+        }
+        
+        /* 如果 main-card 的第一個子元素有 padding 且不是最後一個，同樣處理 */
+        .main-card > div[style*="padding"]:first-child:not(:last-child) {
+            margin-left: -24px;
+            margin-right: -24px;
+            margin-top: -24px;
+        }
+        
+        /* 如果 main-card 的最後一個子元素是 data-container，移除下邊距 */
+        .main-card > .data-container:last-child:not(:first-child) {
+            margin-bottom: -24px;
+        }
+
+        .main-card:hover {
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08);
+            transform: translateY(-2px);
+        }
+
+        /* Filters Optimization */
+        .integrated-controls {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background: #ffffff;
+        }
+
+        .filter-primary-row {
+            display: flex;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+        }
+
+        .filter-advanced-row {
+            display: none;
+            gap: 16px;
+            flex-wrap: wrap;
+            align-items: flex-end;
+            padding-top: 12px;
+            margin-top: 4px;
+            border-top: 1px dashed #e2e8f0;
+        }
+
+        .filter-advanced-row.show {
+            display: flex;
+        }
+
+        .control-row-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin-top: 4px;
+        }
+
+        .search-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex: 1;
+            min-width: 140px;
+        }
+
+        .search-item label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .btn {
+            padding: 9px 16px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+
+        .btn-primary:hover {
+            background: #1d4ed8;
+        }
+
+        .btn-outline {
+            background: white;
+            border: 1px solid var(--border);
+            color: var(--text-main);
+        }
+
+        .btn-outline:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-ai {
+            background: #7c3aed;
+            color: white;
+        }
+
+        .btn-link {
+            background: none;
+            border: none;
+            color: var(--primary);
+            padding: 0;
+            cursor: pointer;
+            font-size: 13px;
+            text-decoration: none;
+        }
+
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+
+        .filter-input,
+        .filter-select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            background: #f8fafc;
+            font-size: 14px;
+            transition: all 0.2s;
+            color: #334155;
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 修正下拉選單文字被遮住的問題 */
+        .filter-select {
+            z-index: 10;
+        }
+        
+        .filter-select:focus {
+            z-index: 100;
+        }
+        
+        /* 確保表格中的下拉選單有足夠的 z-index */
+        table .filter-select {
+            position: relative;
+            z-index: 10;
+        }
+        
+        table .filter-select:focus {
+            z-index: 100;
+        }
+        
+        /* 確保表格中的下拉選單選項可以正確顯示 */
+        table td {
+            position: relative;
+            overflow: visible;
+        }
+        
+        /* 當下拉選單展開時，確保選項不被遮住 */
+        table .filter-select option {
+            background: white;
+            color: #334155;
+            padding: 8px 12px;
+        }
+
+        .filter-input:focus,
+        .filter-select:focus {
+            border-color: var(--primary);
+            outline: none;
+            background: white;
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* 美化 optgroup 樣式，讓計畫分組更清晰 */
+        .filter-select optgroup {
+            font-weight: 600;
+            color: var(--primary);
+            background: #eff6ff;
+            padding: 4px 0;
+        }
+
+        .filter-select optgroup option {
+            font-weight: normal;
+            color: #334155;
+            padding-left: 20px;
+            background: white;
+        }
+
+        .filter-select optgroup option:hover {
+            background: #f1f5f9;
+        }
+
+        /* 後台：帳號/群組雙欄（避免右側超出畫面） */
+        .admin-users-layout {
+            display: grid;
+            grid-template-columns: minmax(560px, 2.2fr) minmax(320px, 1fr);
+            gap: 16px;
+            align-items: start;
+            /* 群組清單/成員清單高度（可被放大模式覆寫） */
+            --groups-list-max: 240px;
+            --group-members-max: 320px;
+        }
+
+        .admin-users-layout > * {
+            min-width: 0;
+        }
+
+        /* 放大群組管理：右側佔滿，方便大量人員勾選 */
+        .admin-users-layout.groups-expanded {
+            grid-template-columns: 1fr;
+            --groups-list-max: 360px;
+            --group-members-max: 70vh;
+        }
+
+        .admin-users-layout.groups-expanded .admin-users-left {
+            display: none;
+        }
+
+        @media (max-width: 1100px) {
+            .admin-users-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* [Added] Custom focus styles for date inputs in edit mode */
+        #editReplyDate:focus,
+        #editResponseDate:focus {
+            border-color: #667eea !important;
+            background: #ffffff !important;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15) !important;
+            outline: none;
+        }
+
+        .filter-input::placeholder {
+            color: #94a3b8;
+        }
+
+        .pwd-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        .pwd-wrapper .filter-input {
+            padding-right: 45px; /* 為顯示/隱藏按鈕留出空間 */
+        }
+
+        .pwd-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #94a3b8;
+            border: none;
+            background: none;
+            font-size: 18px;
+            padding: 4px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            transition: color 0.2s;
+        }
+
+        .pwd-toggle:hover {
+            color: var(--primary);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .sidebar-btn {
+            width: 100%;
+            text-align: left;
+            padding: 14px 16px;
+            background: transparent;
+            border: none;
+            color: var(--text-sub);
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 10px;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 6px;
+            font-size: 15px;
+        }
+
+        .sidebar-btn:hover {
+            background: #f1f5f9;
+            color: var(--text-main);
+        }
+
+        .sidebar-btn.active {
+            background: #eff6ff;
+            color: var(--primary);
+        }
+
+
+        .admin-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            padding: 8px;
+            background: #f8fafc;
+            border-radius: 12px;
+            overflow-x: auto;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .admin-tab-btn {
+            padding: 12px 20px;
+            background: transparent;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 14px;
+            color: #64748b;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .admin-tab-btn:hover {
+            background: rgba(37, 99, 235, 0.08);
+            color: var(--primary);
+        }
+
+        .admin-tab-btn.active {
+            background: linear-gradient(135deg, var(--primary-gradient-start) 0%, var(--primary-gradient-end) 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .data-container {
+            overflow-x: auto;
+            position: relative;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+            position: relative;
+        }
+
+        th {
+            position: sticky;
+            top: 0;
+            background: #f8fafc;
+            padding: 16px 16px;
+            text-align: left;
+            font-size: 13px;
+            color: var(--text-sub);
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            user-select: none;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.02em;
+        }
+
+        th:hover {
+            background: #f1f5f9;
+            color: var(--primary);
+        }
+
+        td {
+            padding: 16px 16px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            vertical-align: top;
+            color: #334155;
+            line-height: 1.5;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+            cursor: pointer;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .preview-table {
+            table-layout: fixed;
+            width: 100%;
+            min-width: 900px;
+        }
+
+        .preview-table th:nth-child(1) {
+            width: 60px;
+        }
+
+        /* Status */
+        .preview-table th:nth-child(2) {
+            width: 140px;
+        }
+
+        /* Number */
+        .preview-table th:nth-child(3) {
+            width: 80px;
+        }
+
+        /* Unit */
+        .preview-table th:nth-child(4) {
+            width: 40%;
+        }
+
+        /* Content */
+        .preview-table th:nth-child(5) {
+            width: 35%;
+        }
+
+        /* Review */
+        .preview-content-box {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            white-space: normal;
+            word-break: break-word;
+            font-size: 13px;
+            line-height: 1.5;
+            color: #475569;
+        }
+
+        .pagination-bar {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .page-btn {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid var(--border);
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            color: var(--text-main);
+            font-size: 13px;
+            transition: all 0.2s;
+        }
+
+        .page-btn:hover:not(:disabled) {
+            background: #f1f5f9;
+            border-color: #cbd5e1;
+            color: var(--primary);
+        }
+
+        .page-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: white;
+            font-weight: 600;
+        }
+
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f8fafc;
+        }
+
+        .page-dots {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 32px;
+            color: var(--text-sub);
+            font-size: 12px;
+        }
+
+            .page-size-select {
+                padding: 8px 12px;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                font-size: 15px;
+                background: white;
+                cursor: pointer;
+                color: var(--text-sub);
+                font-weight: 500;
+            }
+
+            .page-btn {
+                width: 36px;
+                height: 36px;
+                font-size: 15px;
+            }
+
+        .page-size-select:hover {
+            border-color: #cbd5e1;
+            color: var(--text-main);
+        }
+
+        /* [Modified] Badges and Tags unified style */
+        .badge {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            white-space: nowrap;
+        }
+
+        .badge.active {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .badge.resolved {
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        .badge.self {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .badge.new {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge.update {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .ai-tag {
+            font-size: 11px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid transparent;
+        }
+
+        .ai-tag.yes {
+            color: #059669;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+
+        .ai-tag.no {
+            color: #dc2626;
+            background: #fef2f2;
+            border-color: #fecaca;
+        }
+
+        /* Kind tag now matches Badge style */
+        .kind-tag {
+            font-size: 12px;
+            font-weight: 600;
+            border-radius: 20px;
+            padding: 4px 10px;
+            border: none;
+            color: #555;
+            background: #f8fafc;
+            display: inline-block;
+            width: fit-content;
+        }
+
+        .kind-tag.N {
+            color: #b91c1c;
+            background: #fef2f2;
+        }
+
+        /* 缺失 */
+        .kind-tag.O {
+            color: #c2410c;
+            background: #fff7ed;
+        }
+
+        /* 觀察 */
+        .kind-tag.R {
+            color: #15803d;
+            background: #f0fdf4;
+        }
+
+        /* 建議 */
+
+        .drawer-backdrop,
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: 100;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            backdrop-filter: blur(2px);
+        }
+        
+        /* 批次內容模態視窗需要有更高的 z-index */
+        #batchContentModal {
+            z-index: 1000 !important;
+        }
+
+        .drawer-backdrop.open,
+        .modal-overlay.open {
+            display: flex;
+        }
+        
+        /* 自訂確認對話框顯示 */
+        .modal-overlay[id="confirmModal"] {
+            display: none;
+            z-index: 10000 !important; /* 確保確認視窗顯示在 drawer 之上 */
+        }
+        
+        .modal-overlay[id="confirmModal"][style*="flex"],
+        .modal-overlay[id="confirmModal"][style*="display: flex"] {
+            display: flex !important;
+            z-index: 10000 !important;
+        }
+
+        .drawer {
+            position: fixed;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            width: 900px;
+            max-width: 100vw;
+            background: white;
+            z-index: 101;
+            transform: translateX(100%);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 25px rgba(0, 0, 0, 0.15);
+        }
+
+        .drawer.open {
+            transform: translateX(0);
+        }
+
+        .drawer-header {
+            padding: 20px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #fcfcfc;
+        }
+
+        .drawer-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px;
+        }
+
+        .modal-box {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            width: 400px;
+            max-width: 90%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            z-index: 200;
+            position: relative;
+        }
+        
+        /* 批次內容模態視窗的 modal-box 需要更高的 z-index */
+        #batchContentModal .modal-box {
+            z-index: 1001 !important;
+        }
+
+        .detail-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.01);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 8px;
+            color: #475569;
+        }
+
+ .view-section {
+    display: none;
+    width: 100%;
+    flex-direction: column;
+}
+
+.view-section.active {
+    display: flex;
+}
+
+.view-section:not(.active) {
+    display: none !important;
+    height: 0 !important;
+    overflow: hidden !important;
+    position:  absolute !important;
+    visibility: hidden ! important;
+}
+
+        /* NEW: Single Row Metadata */
+        .detail-header-row {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 16px;
+            font-size: 14px;
+            color: #334155;
+            line-height: 1.6;
+        }
+
+        .detail-header-row .separator {
+            color: #cbd5e1;
+            font-size: 12px;
+            margin: 0 2px;
+        }
+
+        .detail-number {
+            font-family: 'Inter', monospace;
+            font-weight: 600;
+            color: #0f172a;
+        }
+
+        .detail-unit-badge {
+            background: #eff6ff;
+            color: #1d4ed8;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+
+        .content-text {
+            font-size: 15px;
+            line-height: 1.8;
+            color: #1e293b;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #cbd5e1;
+        }
+
+        .timeline-line {
+            position: absolute;
+            left: 20px;
+            top: 24px;
+            bottom: 0;
+            width: 2px;
+            background: #e2e8f0;
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-left: 48px;
+            margin-bottom: 32px;
+        }
+
+        .timeline-dot {
+            position: absolute;
+            left: 14px;
+            top: 4px;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--primary);
+            z-index: 1;
+        }
+
+        .timeline-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 8px;
+        }
+
+        .timeline-date-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: #f1f5f9;
+            color: #475569;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 500;
+            margin-bottom: 12px;
+            border: 1px solid #e2e8f0;
+        }
+
+        #toast-container {
+            position: fixed;
+            top: 80px;
+            right: 24px;
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+
+        .toast {
+            pointer-events: auto;
+            background: white;
+            padding: 16px 20px;
+            border-radius: 12px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+            transform: translateX(120%);
+            transition: transform 0.3s;
+            border-left: 4px solid #cbd5e1;
+        }
+
+        .toast.show {
+            transform: translateX(0);
+        }
+
+        .toast.success {
+            border-left-color: var(--success);
+        }
+
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+
+        .toast.warning {
+            border-left-color: #f59e0b;
+        }
+
+        .toast.info {
+            border-left-color: #3b82f6;
+        }
+
+        .toast-icon {
+            font-size: 20px;
+        }
+
+        .toast-content {
+            flex: 1;
+        }
+
+        .toast-title {
+            font-weight: 700;
+            font-size: 14px;
+            color: var(--text-main);
+            margin-bottom: 2px;
+        }
+
+        .toast-msg {
+            font-size: 13px;
+            color: var(--text-sub);
+        }
+
+        /* 編輯視窗 CSS - 優化手機版 */
+        .review-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 32px;
+            height: 100%;
+        }
+
+        .review-left {
+            border-right: 1px solid #e2e8f0;
+            padding-right: 32px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .review-right {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        th.sort-asc::after {
+            content: " ▲";
+            font-size: 10px;
+            margin-left: 4px;
+            color: var(--primary);
+        }
+
+        th.sort-desc::after {
+            content: " ▼";
+            font-size: 10px;
+            margin-left: 4px;
+            color: var(--primary);
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+
+            /* Header Optimizations */
+            .brand-title {
+                font-size: 16px;
+                max-width: 200px;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            /* 手機版不隱藏標題，只縮小字體 */
+            .brand::after {
+                display: none;
+            }
+
+            .app-header {
+                padding: 0 12px;
+            }
+
+            .user-menu-container {
+                max-width: unset;
+            }
+
+            .user-capsule {
+                padding: 6px 12px;
+            }
+
+            .user-role {
+                display: none;
+            }
+
+            .user-name {
+                max-width: 100px;
+                font-size: 15px;
+            }
+
+            /* Body Optimizations */
+            .app-body {
+                display: block;
+                height: auto;
+                overflow: visible;
+                background: #f8fafc;
+            }
+
+            .main-content {
+                height: auto;
+                overflow: visible;
+                padding: 12px;
+                width: 100%;
+                position: relative;
+            }
+            
+            /* 確保 dashboard-section 和 main-card 之間有足夠間距 */
+            #dashboardSection {
+                margin-bottom: 80px !important; /* 大幅增加間距，確保趨勢圖表底部完全顯示 */
+                padding-bottom: 20px !important; /* 額外增加內部 padding */
+            }
+            
+            .dashboard-section {
+                margin-bottom: 80px !important; /* 確保所有 dashboard-section 都有足夠間距 */
+                padding-bottom: 20px !important; /* 額外增加內部 padding */
+                overflow: visible !important; /* 確保內容不被裁切 */
+                z-index: 1; /* 確保圖表區域在正確層級 */
+            }
+            
+            /* 確保 charts-grid 不會溢出 */
+            .charts-grid {
+                position: relative;
+                margin-bottom: 0;
+                z-index: 1;
+            }
+            
+            /* 特別為趨勢圖表增加額外的底部間距 */
+            .chart-card:has(#trendChart) {
+                margin-bottom: 0;
+                position: relative;
+                z-index: 1;
+            }
+
+            .stats-bar {
+                grid-template-columns: 1fr 1fr;
+                gap: 8px;
+                margin-bottom: 8px;
+            }
+            /* 檢查計畫看板：手機版統計卡片 */
+            .dashboard-stats-cards {
+                display: flex;
+                flex-wrap: wrap;
+                gap: 10px;
+                margin-bottom: 20px;
+            }
+            .dashboard-stat-card {
+                min-width: calc(50% - 6px) !important;
+                flex: 1 1 calc(50% - 6px);
+                padding: 12px 14px !important;
+            }
+            .dashboard-stat-card .stat-val { font-size: 1.35rem !important; }
+            .dashboard-stat-card .stat-label { font-size: 12px !important; }
+            .dashboard-stat-card:last-child { min-width: 100% !important; flex: 1 1 100%; }
+            #dashboardStatByType { flex-wrap: wrap; gap: 8px; }
+            #dashboardPlanProgress { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: 0 -12px; padding: 0 12px; }
+            .dashboard-progress-table { min-width: 600px; font-size: 12px; }
+            .dashboard-progress-table th,
+            .dashboard-progress-table td { padding: 10px 8px !important; font-size: 12px !important; }
+            .dashboard-progress-table th:first-child,
+            .dashboard-progress-table td:first-child { padding-left: 12px !important; }
+            .dashboard-progress-table th:last-child,
+            .dashboard-progress-table td:last-child { padding-right: 12px !important; }
+            /* 手機版：計畫進度統計改為卡片式，每格顯示標題+內容 */
+            #dashboardPlanProgress { overflow-x: visible; padding: 0; margin: 0; }
+            .dashboard-progress-table { min-width: 0; width: 100%; display: block; }
+            .dashboard-progress-table thead { display: none; }
+            .dashboard-progress-table tbody { display: block; }
+            .dashboard-progress-table tbody tr {
+                display: block;
+                background: #fff;
+                border: 2px solid #e2e8f0;
+                border-radius: 10px;
+                margin-bottom: 12px;
+                padding: 14px;
+                box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+            }
+            .dashboard-progress-table tbody td {
+                display: flex !important;
+                align-items: flex-start;
+                padding: 8px 0 !important;
+                border-bottom: 1px solid #f1f5f9;
+                font-size: 13px !important;
+            }
+            .dashboard-progress-table tbody td:last-child { border-bottom: none; }
+            .dashboard-progress-table tbody td[data-label]::before {
+                content: attr(data-label);
+                font-weight: 700;
+                color: #475569;
+                min-width: 90px;
+                flex-shrink: 0;
+            }
+            .dashboard-progress-table tbody td[colspan] { display: block !important; padding: 12px !important; text-align: center; }
+            .dashboard-progress-table tbody td[colspan]::before { display: none; }
+            .schedule-calendar-toolbar { flex-wrap: wrap; gap: 8px; }
+            #dashboardScheduleDayList { padding: 12px; margin-top: 12px; }
+
+            .stat-item {
+                padding: 10px 8px; /* 縮小內邊距，從 14px 12px 改為 10px 8px */
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+            }
+
+            .stat-val {
+                font-size: 24px; /* 縮小字體，從 32px 改為 24px */
+            }
+
+            .stat-label {
+                font-size: 12px; /* 縮小字體，從 15px 改為 12px */
+            }
+
+            .stat-item:last-child {
+                grid-column: span 2;
+                flex-direction: row;
+                gap: 12px;
+                justify-content: center;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+                gap: 12px;
+                margin-bottom: 0; /* 移除 margin-bottom，由 dashboard-section 統一控制間距 */
+            }
+
+            .chart-card {
+                height: 320px;
+                padding: 12px;
+                overflow: hidden;
+                box-sizing: border-box;
+                position: relative;
+            }
+            
+            .chart-card > div {
+                width: 100%;
+                height: 296px;
+                max-width: 100%;
+                overflow: hidden;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                box-sizing: border-box;
+                position: relative;
+            }
+            
+            .chart-card canvas {
+                max-width: 100% !important;
+                max-height: 100% !important;
+                position: relative;
+                display: block; /* 確保 canvas 正確顯示 */
+                image-rendering: -webkit-optimize-contrast; /* 優化渲染品質 */
+                image-rendering: crisp-edges;
+            }
+            
+            /* 圓餅圖保持原始大小 */
+            .chart-card:has(#statusChart) > div {
+                height: 296px;
+                min-height: 296px;
+            }
+            
+            /* 保持長條圖（機構圖表）的原始大小 */
+            .chart-card:has(#unitChart) {
+                height: 320px;
+            }
+            
+            .chart-card:has(#unitChart) > div {
+                height: 296px;
+                min-height: 296px;
+            }
+            
+            /* 特別針對趨勢圖表，確保有足夠空間顯示且不被裁切 */
+            .chart-card:has(#trendChart) {
+                height: 450px; /* 進一步增加高度以容納趨勢圖表，確保 X 軸標籤完整顯示 */
+                margin-bottom: 0; /* 確保沒有負 margin */
+                position: relative;
+                z-index: 2; /* 確保趨勢圖表在較高層級 */
+            }
+            
+            .chart-card:has(#trendChart) > div {
+                height: 426px; /* 對應增加內部高度 (450px - 24px padding) */
+                min-height: 426px;
+                overflow: visible; /* 改為 visible，確保圖表內容不被裁切 */
+                position: relative;
+                z-index: 2;
+            }
+            
+            .chart-card:has(#trendChart) canvas {
+                position: relative;
+                z-index: 2;
+            }
+
+            /* Optimized Filters for Mobile */
+            .main-card {
+                padding: 16px;
+                margin-bottom: 16px;
+                margin-top: 0 !important; /* 確保沒有負 margin 導致覆蓋 */
+                position: relative; /* 確保在正常文檔流中 */
+                z-index: 0; /* 設置較低的 z-index，確保不會覆蓋圖表 */
+            }
+            
+            /* 確保第一個 main-card（在 dashboard-section 之後）有足夠的上邊距，不會覆蓋圖表 */
+            #dashboardSection + .main-card,
+            .dashboard-section + .main-card {
+                margin-top: 0 !important;
+                clear: both; /* 確保不會浮動到圖表上方 */
+                z-index: 0; /* 確保在圖表下方 */
+            }
+            
+            /* 確保 view-section 內的內容不會重疊 */
+            .view-section {
+                position: relative;
+            }
+            
+            .view-section > .dashboard-section {
+                margin-bottom: 60px !important; /* 與上面的設定一致 */
+            }
+            
+            /* 特別針對 searchView 中的 dashboard-section，確保有足夠間距 */
+            #searchView .dashboard-section {
+                margin-bottom: 60px !important;
+            }
+
+            .integrated-controls {
+                padding: 16px;
+            }
+
+            .filter-primary-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .filter-advanced-row {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .search-item label {
+                font-size: 14px;
+            }
+
+            .filter-input,
+            .filter-select {
+                font-size: 16px;
+                padding: 12px;
+            }
+
+            .btn {
+                font-size: 15px;
+                padding: 11px 18px;
+            }
+
+            .control-row-actions {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .pagination-bar {
+                justify-content: center;
+            }
+
+            .data-container {
+                overflow-x: auto; /* 保持橫向滾動 */
+                overflow-y: visible; /* 允許垂直方向可見，但避免遮住其他元素 */
+                position: relative;
+            }
+
+            table,
+            thead,
+            tbody,
+            th,
+            td,
+            tr {
+                display: block;
+                width: 100%;
+                min-width: 0;
+            }
+
+            thead {
+                display: none;
+            }
+
+            tr {
+                background: white;
+                margin-bottom: 12px;
+                border-radius: 12px;
+                padding: 16px;
+                border: 1px solid #e2e8f0;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+                position: relative;
+                cursor: pointer;
+                transition: transform 0.1s;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-start;
+                gap: 0;
+            }
+
+            tr:active {
+                transform: scale(0.98);
+                background: #fafafa;
+            }
+
+            td {
+                padding: 0;
+                border: none;
+                text-align: left;
+                margin-bottom: 0;
+            }
+
+            /* 大部分 td 是 block */
+            td:not([data-label="年度"]):not([data-label="機構"]) {
+                display: block;
+                width: 100%;
+            }
+
+            /* 檢核方框保持在左上角 */
+            .manager-col {
+                position: absolute;
+                top: 16px;
+                left: 16px;
+                width: auto;
+                z-index: 2;
+                display: flex;
+                align-items: center;
+                height: 24px;
+            }
+            
+            .manager-col input[type="checkbox"] {
+                transform: scale(1);
+            }
+
+            .manager-col input[type="checkbox"] {
+                margin: 0;
+                width: 18px;
+                height: 18px;
+                cursor: pointer;
+            }
+
+            /* 第一行：編號（左）和狀態與類型（右） - 確保在同一行 */
+            td[data-label="編號"] {
+                font-size: 16px;
+                font-weight: 700;
+                color: var(--text-main);
+                margin-bottom: 10px;
+                margin-left: 0;
+                padding-left: 32px;
+                padding-right: 150px;
+                width: 100%;
+                order: 1;
+                line-height: 26px;
+                min-height: 26px;
+                display: block;
+                position: relative;
+                overflow: visible;
+                word-wrap: break-word;
+                word-break: break-word;
+            }
+
+            /* 狀態與類型在編號同一行右側 */
+            td[data-label="狀態與類型"] {
+                position: absolute;
+                top: 16px;
+                right: 16px;
+                width: auto;
+                max-width: 140px;
+                margin-bottom: 0;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
+                justify-content: flex-end;
+                order: 1;
+                line-height: 26px;
+                min-height: 26px;
+                z-index: 1;
+            }
+
+            /* 確保狀態與類型的徽章和標籤不會過大 */
+            td[data-label="狀態與類型"] .badge,
+            td[data-label="狀態與類型"] .kind-tag {
+                font-size: 12px;
+                padding: 3px 8px;
+                white-space: nowrap;
+                line-height: 1.4;
+            }
+
+            /* 第二行：年度和機構 - 在同一行顯示 */
+            td[data-label="年度"] {
+                display: inline-block;
+                width: auto;
+                font-size: 13px;
+                color: #64748b;
+                background: none;
+                padding: 0;
+                border-radius: 0;
+                margin-right: 0;
+                margin-bottom: 10px;
+                margin-left: 0;
+                margin-top: 0;
+                vertical-align: baseline;
+                line-height: 1.6;
+                font-weight: 400;
+                order: 2;
+                white-space: nowrap;
+            }
+
+            /* 年度標籤前面加上標籤文字 */
+            td[data-label="年度"]::before {
+                content: "年度：";
+                color: #94a3b8;
+                font-weight: 500;
+                margin-right: 4px;
+            }
+
+            /* 年度後面加上分隔符 */
+            td[data-label="年度"]::after {
+                content: " | ";
+                color: #cbd5e1;
+                margin: 0 8px;
+                font-weight: 300;
+            }
+
+            td[data-label="機構"] {
+                display: inline-block;
+                width: auto;
+                font-size: 13px;
+                color: #64748b;
+                background: none;
+                padding: 0;
+                border-radius: 0;
+                margin-right: 0;
+                margin-bottom: 10px;
+                margin-left: 0;
+                margin-top: 0;
+                vertical-align: baseline;
+                line-height: 1.6;
+                font-weight: 400;
+                order: 2;
+                white-space: nowrap;
+            }
+
+            /* 機構標籤前面加上標籤文字 */
+            td[data-label="機構"]::before {
+                content: "機構：";
+                color: #94a3b8;
+                font-weight: 500;
+                margin-right: 4px;
+            }
+
+            /* 第三行：事項內容 */
+            td[data-label="事項內容"] {
+                font-size: 15px;
+                color: #334155;
+                line-height: 1.6;
+                margin-bottom: 12px;
+                margin-top: 0;
+                display: -webkit-box;
+                -webkit-line-clamp: 3;
+                -webkit-box-orient: vertical;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                width: 100%;
+                order: 3;
+            }
+
+            /* 第四行：最新辦理/審查情形 */
+            td[data-label="最新辦理/審查情形"] {
+                font-size: 14px;
+                color: #64748b;
+                border-top: 1px solid #f1f5f9;
+                padding-top: 12px;
+                margin-top: 0;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                width: 100%;
+                order: 4;
+                line-height: 1.5;
+            }
+
+            /* 第五行：操作（管理功能） */
+            td[data-label="操作"] {
+                margin-top: 0;
+                border-top: 1px solid #f1f5f9;
+                padding-top: 12px;
+                width: 100%;
+                order: 5;
+            }
+
+            td[data-label="操作"] > div {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+                align-items: flex-end;
+            }
+
+            td[data-label="操作"] .btn {
+                font-size: 13px;
+                padding: 6px 12px;
+                white-space: nowrap;
+            }
+
+            td[data-label="操作"] .ai-tag,
+            td[data-label="操作"] .badge {
+                align-self: flex-end;
+            }
+
+            /* 相容舊的標籤 */
+            td[data-label="管理功能"] {
+                margin-top: 0;
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+                border-top: 1px solid #f1f5f9;
+                padding-top: 12px;
+                width: 100%;
+                order: 6;
+            }
+
+            td[data-label="管理功能"] .btn {
+                font-size: 14px;
+                padding: 8px 14px;
+            }
+
+            .issue-check {
+                transform: scale(1.3);
+            }
+
+            .user-table tr {
+                padding-bottom: 16px;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: flex-start;
+                position: relative;
+            }
+
+            /* 用戶管理：第一行 - 姓名（左側） */
+            .user-table td[data-label="姓名"] {
+                font-weight: 700;
+                font-size: 18px;
+                margin-bottom: 6px;
+                margin-left: 0;
+                margin-right: auto;
+                padding-right: 100px !important;
+                padding: 0 !important;
+                width: 100%;
+                order: 1;
+                line-height: 24px;
+                min-height: 24px;
+                display: flex;
+                align-items: center;
+                margin-top: 0;
+            }
+
+            /* 用戶管理：第二行 - 帳號 + 權限合併顯示 */
+            .user-table td[data-label="帳號"] {
+                font-size: 15px;
+                color: #666;
+                margin-bottom: 8px;
+                margin-right: 8px;
+                display: inline-block;
+                order: 2;
+            }
+
+            .user-table td[data-label="權限"] {
+                display: inline-block;
+                width: auto;
+                background: #eff6ff;
+                color: var(--primary);
+                padding: 4px 10px;
+                border-radius: 4px;
+                font-size: 14px;
+                margin-bottom: 8px;
+                margin-right: 8px;
+                order: 3;
+            }
+
+            /* 用戶管理：註冊時間 */
+            .user-table td[data-label="註冊時間"] {
+                font-size: 14px;
+                color: #64748b;
+                margin-bottom: 8px;
+                width: 100%;
+                order: 4;
+            }
+
+            /* 用戶管理和計畫管理：操作按鈕統一設置 */
+            .user-table td[data-label="操作"] {
+                position: absolute;
+                top: 16px;
+                right: 14px;
+                width: auto;
+                margin-top: 0;
+                display: flex;
+                gap: 8px;
+                justify-content: flex-end;
+                order: 5;
+                align-items: center;
+                line-height: 24px;
+                min-height: 24px;
+            }
+            
+            /* 檢查計畫表格手機版樣式 */
+            /* 選擇框與計畫名稱對齊 - 使用與查詢看板相同的對齊方式 */
+            .user-table td[data-label="選擇"] {
+                position: absolute;
+                top: 16px;
+                left: 14px;
+                width: auto;
+                padding: 0 !important;
+                margin: 0;
+                z-index: 2;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                height: 24px;
+                line-height: 24px;
+            }
+
+            .user-table td[data-label="選擇"] input[type="checkbox"] {
+                margin: 0;
+                width: 20px;
+                height: 20px;
+                cursor: pointer;
+                flex-shrink: 0;
+                vertical-align: middle;
+            }
+            
+            /* 計畫管理：第一行 - 計畫名稱（左側，不顯示操作按鈕） */
+            .user-table td[data-label="計畫名稱"] {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--text-main);
+                margin-bottom: 8px;
+                margin-left: 42px;
+                margin-right: 0;
+                padding-right: 0;
+                width: 100%;
+                order: 1;
+                line-height: 24px;
+                min-height: 24px;
+                display: flex;
+                align-items: center;
+                padding-top: 0 !important;
+                margin-top: 0;
+                padding: 0 !important;
+            }
+
+            /* 計畫管理：操作按鈕移到建立時間之後（獨立一行） */
+            /* 由於手機版表格使用flex布局，我們可以通過order來控制順序 */
+            .user-table td[data-label="建立時間"] {
+                order: 4;
+            }
+
+            /* 計畫管理表格的操作按鈕：移到下一行，不與計畫名稱同一行 */
+            /* 通過檢查是否在建立時間之後來判斷是否為計畫管理表格 */
+            .user-table td[data-label="建立時間"] ~ td[data-label="操作"] {
+                position: static !important;
+                top: auto !important;
+                right: auto !important;
+                margin-top: 8px;
+                margin-bottom: 0;
+                justify-content: flex-end;
+                order: 5;
+                width: 100%;
+                border-top: 1px solid #f1f5f9;
+                padding-top: 10px;
+            }
+
+            /* 計畫管理：第二行 - 年度 + 開立事項數量合併顯示（統一格式） */
+            .user-table td[data-label="年度"],
+            .user-table td[data-label="開立事項數量"] {
+                display: inline-block !important;
+                width: auto !important;
+                font-size: 14px !important;
+                font-weight: 500 !important;
+                color: #64748b !important;
+                background: #f1f5f9 !important;
+                padding: 4px 10px !important;
+                border-radius: 6px !important;
+                border: 1px solid #e2e8f0 !important;
+                margin-right: 8px !important;
+                margin-bottom: 8px !important;
+                margin-left: 0 !important;
+                margin-top: 0 !important;
+                line-height: 1.5 !important;
+            }
+
+            .user-table td[data-label="年度"] {
+                order: 2;
+            }
+            
+            .user-table td[data-label="開立事項數量"] {
+                order: 3;
+            }
+            
+            /* 計畫管理：建立時間 */
+            .user-table td[data-label="建立時間"] {
+                font-size: 14px;
+                color: #64748b;
+                margin-bottom: 8px;
+                width: 100%;
+                order: 4;
+            }
+
+
+            /* 日誌表格（登入記錄、操作記錄）手機版優化 - 僅在沒有特定表格class時應用 */
+            /* 第一行：時間 */
+            tr:not(.user-table) td[data-label="時間"] {
+                font-size: 15px;
+                font-weight: 600;
+                color: var(--text-main);
+                margin-bottom: 8px;
+                width: 100%;
+                order: 1;
+            }
+
+            /* 登入記錄：第二行 - 帳號 + IP合併顯示（僅非用戶管理表格） */
+            tr:not(.user-table) td[data-label="帳號"] {
+                display: inline-block;
+                width: auto;
+                font-size: 15px;
+                color: #64748b;
+                background: #f1f5f9;
+                padding: 4px 10px;
+                border-radius: 6px;
+                margin-right: 8px;
+                margin-bottom: 8px;
+                margin-top: 0;
+                order: 2;
+            }
+
+            tr:not(.user-table) td[data-label="IP"] {
+                display: inline-block;
+                width: auto;
+                font-size: 15px;
+                color: #64748b;
+                background: #f1f5f9;
+                padding: 4px 10px;
+                border-radius: 6px;
+                margin-right: 8px;
+                margin-bottom: 8px;
+                margin-top: 0;
+                order: 3;
+            }
+
+            /* 操作記錄：動作和詳細內容 */
+            tr:not(.user-table) td[data-label="動作"] {
+                display: inline-block;
+                width: auto;
+                margin-right: 8px;
+                margin-bottom: 8px;
+                margin-top: 0;
+                order: 2;
+            }
+
+            tr:not(.user-table) td[data-label="詳細內容"] {
+                font-size: 14px;
+                color: #64748b;
+                margin-bottom: 8px;
+                margin-top: 8px;
+                width: 100%;
+                order: 4;
+                border-top: 1px solid #f1f5f9;
+                padding-top: 10px;
+            }
+
+            .drawer {
+                width: 100%;
+                max-width: 100%;
+                top: 0;
+                height: 100%;
+                z-index: 9999;
+            }
+
+            /* 編輯視窗 - 手機版垂直堆疊優化 */
+            .review-grid {
+                grid-template-columns: 1fr;
+                gap: 20px;
+                display: block;
+            }
+
+            .review-left {
+                border-right: none;
+                border-bottom: 1px solid #e2e8f0;
+                padding-right: 0;
+                padding-bottom: 20px;
+                margin-bottom: 20px;
+                height: auto;
+                overflow: visible;
+            }
+
+            .review-right {
+                height: auto;
+                overflow: visible;
+            }
+
+            .drawer-header {
+                padding: 16px;
+            }
+
+            .drawer-header > div {
+                font-size: 18px;
+            }
+
+            .drawer-body {
+                padding: 16px;
+            }
+
+            .detail-card {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+
+            /* Drawer 詳細頁面：手機版優化 */
+            .detail-header-row {
+                font-size: 15px;
+                padding-bottom: 12px;
+                margin-bottom: 12px;
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
+            }
+
+            /* 確保編號、機構、狀態與類型的顯示與主看板一致 */
+            .detail-number {
+                font-size: 18px;
+                font-weight: 700;
+                color: var(--primary);
+                margin-right: 8px;
+            }
+
+            .detail-unit-badge {
+                font-size: 14px;
+                padding: 4px 10px;
+                background: #f1f5f9;
+                color: #64748b;
+                border-radius: 6px;
+                margin-right: 8px;
+            }
+
+            .detail-header-row #dStatus {
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            .detail-header-row #dStatus .badge,
+            .detail-header-row #dStatus .kind-tag {
+                font-size: 13px;
+                padding: 3px 8px;
+                white-space: nowrap;
+            }
+
+            /* 編輯模式標題區優化 - 與主看板樣式一致 */
+            #editModeContent > div[style*="background:#eff6ff"] {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                gap: 8px;
+                padding: 12px 16px !important;
+                font-size: 16px;
+            }
+
+            #editModeContent > div[style*="background:#eff6ff"] > span {
+                display: inline-flex;
+                align-items: center;
+                line-height: 24px;
+            }
+
+            /* 編輯模式中的分隔符 */
+            #editModeContent > div[style*="background:#eff6ff"] > span[style*="color:#cbd5e1"] {
+                color: #cbd5e1 !important;
+                margin: 0 4px;
+                font-size: 14px;
+            }
+
+            #editHeaderNumber {
+                font-size: 18px !important;
+                font-weight: 700 !important;
+                color: var(--primary) !important;
+                margin-right: 0;
+            }
+
+            /* 移除年度特殊样式，与详细资料页面保持一致 */
+
+            #editHeaderUnit {
+                font-size: 15px !important;
+                padding: 4px 10px !important;
+                background: #f1f5f9 !important;
+                color: #64748b !important;
+                border-radius: 6px !important;
+                margin: 0;
+            }
+
+            /* 編輯模式中的狀態與類型樣式 */
+            #editHeaderStatusKind {
+                display: flex !important;
+                align-items: center;
+                gap: 6px;
+                flex-wrap: wrap;
+            }
+
+            #editHeaderStatusKind .badge,
+            #editHeaderStatusKind .kind-tag {
+                font-size: 13px;
+                padding: 3px 8px;
+                white-space: nowrap;
+            }
+
+            .content-text {
+                font-size: 16px;
+                padding: 16px;
+            }
+
+            .timeline-title {
+                font-size: 16px;
+            }
+
+            .timeline-date-tag {
+                font-size: 13px;
+                padding: 5px 12px;
+            }
+
+            .modal-box {
+                padding: 24px;
+            }
+
+            .modal-box h3 {
+                font-size: 20px;
+            }
+
+            .form-group label {
+                font-size: 15px;
+            }
+
+            .form-group input,
+            .form-group select {
+                font-size: 16px;
+                padding: 12px;
+            }
+
+            /* 加大手機版輸入框高度 */
+            #editHandling,
+            #editReview {
+                min-height: 200px !important;
+            }
+
+            #toast-container {
+                left: 20px;
+                right: 20px;
+                top: 80px;
+                width: auto;
+            }
+
+            /* 手機版：帳號管理頁面按鈕保持靠右 */
+            .users-header {
+                justify-content: space-between;
+                gap: 16px;
+            }
+
+            /* 手機版：增大徽章和標籤字體 */
+            .badge {
+                font-size: 14px;
+                padding: 5px 12px;
+            }
+
+            .kind-tag {
+                font-size: 14px;
+                padding: 5px 12px;
+            }
+
+            .ai-tag {
+                font-size: 13px;
+                padding: 4px 10px;
+            }
+
+            /* 手機版：增大分頁和統計文字 */
+            .control-row-actions > div {
+                font-size: 15px;
+            }
+
+            #issuesTotalCount {
+                font-size: 16px;
+            }
+        }
+        
+        /* 批次模式表格優化 */
+        /* 批次模式表格容器：允許橫向滾動以確保表格內容完整顯示 */
+        .main-card > .data-container[style*="overflow"] {
+            overflow-x: auto !important;
+            overflow-y: visible !important;
+            position: relative;
+        }
+        
+        #createBatchGridTable {
+            table-layout: fixed !important;
+            width: 100%;
+            min-width: 1000px;
+            position: relative;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+        
+        /* 確保所有表格單元格都遵守寬度限制，不會溢出 */
+        #createBatchGridTable td,
+        #createBatchGridTable th {
+            box-sizing: border-box !important;
+            overflow: hidden !important;
+        }
+        
+        /* 確保表格行和單元格允許內容溢出 */
+        #createBatchGridTable tr {
+            position: relative;
+        }
+        
+        #createBatchGridTable th {
+            padding: 10px 6px;
+            vertical-align: middle;
+            text-align: center;
+            font-weight: 600;
+            font-size: 12px;
+            color: #334155;
+            background: #f8fafc;
+            border-bottom: 2px solid #e2e8f0;
+            position: relative;
+            overflow: hidden !important;
+        }
+        
+        #createBatchGridTable td {
+            padding: 8px 6px;
+            vertical-align: top;
+            position: relative;
+            overflow: hidden !important;
+        }
+        
+        /* 確保事項內容欄位有最高的 z-index，不會被其他元素遮住 */
+        #createBatchGridTable td:nth-child(3) {
+            position: relative;
+            z-index: 10 !important;
+            overflow: visible !important;
+        }
+        
+        /* 確保事項內容按鈕有足夠的層級 */
+        #createBatchGridTable td:nth-child(3) .create-batch-content-btn {
+            position: relative;
+            z-index: 11 !important;
+        }
+        
+        /* 確保表格單元格內的內容不會相互遮住 */
+        #createBatchGridTable td > * {
+            position: relative;
+        }
+        
+        /* 當輸入框或下拉選單 focus 時，提高 z-index，但不要超過事項內容欄位 */
+        #createBatchGridTable td input:focus,
+        #createBatchGridTable td select:focus {
+            z-index: 5 !important;
+        }
+        
+        /* 事項內容按鈕 focus 時保持最高層級 */
+        #createBatchGridTable td .create-batch-content-btn:focus {
+            z-index: 15 !important;
+        }
+        
+        /* 確保下拉選單展開時不會遮住事項內容欄位 */
+        #createBatchGridTable td select {
+            position: relative;
+            z-index: 1;
+        }
+        
+        #createBatchGridTable td select:focus {
+            z-index: 5 !important;
+        }
+        
+        /* 當下拉選單展開時，選項列表應該在事項內容欄位下方 */
+        #createBatchGridTable td:nth-child(4) select,
+        #createBatchGridTable td:nth-child(5) select,
+        #createBatchGridTable td:nth-child(6) select,
+        #createBatchGridTable td:nth-child(7) select,
+        #createBatchGridTable td:nth-child(8) select,
+        #createBatchGridTable td:nth-child(9) select {
+            z-index: 1;
+        }
+        
+        #createBatchGridTable td:nth-child(4) select:focus,
+        #createBatchGridTable td:nth-child(5) select:focus,
+        #createBatchGridTable td:nth-child(6) select:focus,
+        #createBatchGridTable td:nth-child(7) select:focus,
+        #createBatchGridTable td:nth-child(8) select:focus,
+        #createBatchGridTable td:nth-child(9) select:focus {
+            z-index: 5 !important;
+        }
+        
+        #createBatchGridTable .create-batch-number {
+            width: 100%;
+            min-width: 0;
+            font-family: monospace;
+            font-size: 11px;
+            padding: 5px 6px;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            vertical-align: middle;
+            height: 32px;
+        }
+        
+        /* 確保所有輸入框和下拉選單對齊，減少 padding 以節省空間 */
+        #createBatchGridTable input[type="text"],
+        #createBatchGridTable select {
+            padding: 5px 6px;
+            box-sizing: border-box;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            vertical-align: middle;
+            height: 32px;
+            font-size: 12px;
+        }
+        
+        #createBatchGridTable input[type="text"]:focus,
+        #createBatchGridTable select:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        
+        /* 類型欄位的下拉選單 - 保持適當字體大小 */
+        #createBatchGridTable td:nth-child(8) select {
+            font-size: 12px !important;
+            padding: 5px 6px !important;
+        }
+        
+        /* 狀態欄位的下拉選單 - 增加字體大小讓內容更易讀 */
+        #createBatchGridTable td:nth-child(9) select {
+            font-size: 13px !important;
+            padding: 6px 8px !important;
+        }
+        
+        /* 年度和機構欄位的輸入框 - 減少 padding */
+        #createBatchGridTable td:nth-child(4) input,
+        #createBatchGridTable td:nth-child(5) input {
+            padding: 5px 4px !important;
+            font-size: 12px !important;
+        }
+        
+        /* 優化按鈕大小，確保在較小欄位中也能正常顯示 */
+        #createBatchGridTable button {
+            font-size: 11px;
+            padding: 5px 8px;
+            white-space: nowrap;
+            height: 32px;
+        }
+        
+        /* 優化欄位寬度，減少空白，將更多空間分配給事項內容欄位 */
+        #createBatchGridTable th:nth-child(1),
+        #createBatchGridTable td:nth-child(1) {
+            width: 2.5%;
+            min-width: 45px;
+            max-width: 50px;
+            text-align: center;
+            padding: 8px 4px !important;
+        }
+        
+        #createBatchGridTable th:nth-child(2),
+        #createBatchGridTable td:nth-child(2) {
+            width: 11%;
+            min-width: 130px;
+            max-width: 160px;
+            padding: 8px 6px !important;
+        }
+        
+        #createBatchGridTable th:nth-child(3),
+        #createBatchGridTable td:nth-child(3) {
+            width: 38%;
+            min-width: 350px;
+            padding: 6px 6px !important;
+        }
+        
+        /* 年度欄位 - 進一步減少寬度和空白 */
+        #createBatchGridTable th:nth-child(4),
+        #createBatchGridTable td:nth-child(4) {
+            width: 3.5%;
+            min-width: 45px;
+            max-width: 55px;
+            padding: 8px 2px !important;
+        }
+        
+        /* 機構欄位 - 進一步減少寬度和空白 */
+        #createBatchGridTable th:nth-child(5),
+        #createBatchGridTable td:nth-child(5) {
+            width: 4%;
+            min-width: 50px;
+            max-width: 65px;
+            padding: 8px 2px !important;
+        }
+        
+        /* 分組欄位 - 減少寬度和空白 */
+        #createBatchGridTable th:nth-child(6),
+        #createBatchGridTable td:nth-child(6) {
+            width: 4.5%;
+            min-width: 55px;
+            max-width: 70px;
+            padding: 8px 3px !important;
+        }
+        
+        #createBatchGridTable th:nth-child(7),
+        #createBatchGridTable td:nth-child(7) {
+            width: 7.5%;
+            min-width: 85px;
+            max-width: 100px;
+            padding: 8px 4px !important;
+        }
+        
+        /* 類型欄位 - 減少寬度和空白，但仍保持可讀性 */
+        #createBatchGridTable th:nth-child(8),
+        #createBatchGridTable td:nth-child(8) {
+            width: 5%;
+            min-width: 60px;
+            max-width: 75px;
+            padding: 8px 3px !important;
+        }
+        
+        /* 狀態欄位 - 增加寬度讓內容顯示更大 */
+        #createBatchGridTable th:nth-child(9),
+        #createBatchGridTable td:nth-child(9) {
+            width: 7.5%;
+            min-width: 85px;
+            max-width: 100px;
+            padding: 8px 5px !important;
+        }
+        
+        #createBatchGridTable th:nth-child(10),
+        #createBatchGridTable td:nth-child(10) {
+            width: 7.5%;
+            min-width: 85px;
+            max-width: 100px;
+            padding: 8px 4px !important;
+        }
+        
+        /* 操作欄位 - 確保能顯示出來 */
+        #createBatchGridTable th:nth-child(11),
+        #createBatchGridTable td:nth-child(11) {
+            width: 3.5%;
+            min-width: 40px;
+            max-width: 50px;
+            text-align: center;
+            padding: 8px 2px !important;
+        }
+        
+        /* 事項內容 textarea 樣式 - 直接在表格中輸入 */
+        #createBatchGridTable .create-batch-content-textarea {
+            width: 100% !important;
+            max-width: 100% !important;
+            min-width: 0 !important;
+            position: relative !important;
+            z-index: 11 !important;
+            border: 1px solid #cbd5e1 !important;
+            background: #f8fafc !important;
+            color: #334155 !important;
+            border-radius: 6px;
+            font-size: 13px !important;
+            line-height: 1.6 !important;
+            font-weight: 400;
+            box-sizing: border-box !important;
+            resize: vertical !important;
+            font-family: inherit !important;
+            margin: 0 !important;
+        }
+        
+        #createBatchGridTable .create-batch-content-textarea:focus {
+            border-color: #3b82f6 !important;
+            background: #ffffff !important;
+            outline: none !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        }
+        
+        #createBatchGridTable .create-batch-content-textarea::placeholder {
+            color: #94a3b8 !important;
+            font-style: italic;
+        }
+        
+        /* 確保事項內容欄位不會被其他元素遮住 - 已移到上方統一管理 */
+        
+        /* 確保事項內容欄位有足夠的空間且可見，不會超出單元格範圍，減少空白 */
+        #createBatchGridTable td:nth-child(3) {
+            padding: 6px 6px !important;
+            width: 38% !important;
+            min-width: 350px !important;
+            max-width: 38% !important;
+            visibility: visible !important;
+            display: table-cell !important;
+            position: relative !important;
+            z-index: 10 !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* 確保事項內容欄位的表頭也有足夠空間且可見，減少空白 */
+        #createBatchGridTable th:nth-child(3) {
+            padding: 8px 6px !important;
+            width: 38% !important;
+            min-width: 350px !important;
+            max-width: 38% !important;
+            visibility: visible !important;
+            display: table-cell !important;
+            position: relative !important;
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* 確保表格行和單元格不會讓內容溢出 */
+        #createBatchGridTable tbody tr {
+            position: relative;
+        }
+        
+        #createBatchGridTable tbody tr td {
+            overflow: hidden !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* 確保事項內容欄位內的 textarea 不會溢出 */
+        #createBatchGridTable tbody tr td:nth-child(3) {
+            overflow: visible !important;
+        }
+        
+        #createBatchGridTable tbody tr td:nth-child(3) .create-batch-content-textarea {
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
+        
+        /* 確保所有輸入框和下拉選單內容完整顯示 */
+        #createBatchGridTable input[type="text"],
+        #createBatchGridTable input[type="number"],
+        #createBatchGridTable select {
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+            overflow: visible;
+            text-overflow: ellipsis;
+        }
+        
+        /* 確保編號欄位內容完整顯示 */
+        #createBatchGridTable .create-batch-number {
+            font-size: 11px;
+            white-space: nowrap;
+            overflow: visible;
+            text-overflow: ellipsis;
+        }
+        
+        /* 確保事項內容欄位有足夠的垂直空間 */
+        #createBatchGridTable td:nth-child(3) {
+            padding: 12px 10px;
+        }
+        
+        /* 隱藏的事項內容輸入框 */
+        #createBatchGridTable .create-batch-content[type="hidden"] {
+            display: none;
+        }
+        
+        /* 確保所有輸入框都有足夠的層級，不被遮蓋 */
+        #createBatchGridTable input[type="text"],
+        #createBatchGridTable input[type="number"] {
+            width: 100%;
+            font-size: 13px;
+            padding: 6px 8px;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 100;
+        }
+        
+        /* 確保下拉選單有足夠的層級，展開時不被遮蓋 */
+        #createBatchGridTable select {
+            width: 100%;
+            font-size: 13px;
+            padding: 6px 8px;
+            box-sizing: border-box;
+            position: relative;
+            z-index: 100;
+        }
+        
+        /* 確保textarea在所有輸入框之上 */
+        #createBatchGridTable textarea {
+            position: relative;
+            z-index: 100;
+        }
+        
+        /* 當下拉選單展開時，確保選項列表顯示在最上層 */
+        #createBatchGridTable select:focus {
+            z-index: 200;
+        }
+        
+        /* 確保按鈕也有足夠的層級 */
+        #createBatchGridTable button {
+            position: relative;
+            z-index: 50;
+        }
+        
+        /* 修正批次模式模態視窗的重疊問題 */
+        /* 確保模態視窗內的 textarea 有足夠的 z-index 和正確的顯示 */
+        #batchContentModalTextarea {
+            position: relative;
+            z-index: 1;
+            width: 100% !important;
+            min-height: 200px;
+            padding: 12px;
+            font-size: 14px;
+            line-height: 1.6;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        
+        /* 確保模態視窗內的內容區域有正確的 overflow 設定 */
+        #batchContentModal .modal-box {
+            overflow: visible;
+        }
+        
+        /* 確保模態視窗內的 label 和其他元素不會遮住 textarea */
+        #batchContentModal .modal-box > div {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 修正開立事項建檔頁面的重疊問題 */
+        /* 確保單筆模式容器有正確的 overflow 設定 */
+        #createSingleMode {
+            position: relative;
+            overflow: visible;
+        }
+        
+        #createSingleMode > div {
+            position: relative;
+            overflow: visible;
+        }
+        
+        /* 確保開立事項內容 textarea 有足夠的 z-index，不會被其他元素覆蓋 */
+        #createContent {
+            position: relative;
+            z-index: 10;
+            min-height: 120px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+        
+        /* 確保下拉選單不會遮住 textarea */
+        #createSingleMode .filter-select {
+            position: relative;
+            z-index: 5;
+        }
+        
+        #createSingleMode .filter-select:focus {
+            z-index: 15;
+        }
+        
+        /* 確保辦理情形管理區塊不會覆蓋其他內容 */
+        #createHandlingRoundsContainer {
+            position: relative;
+            z-index: 1;
+        }
+        
+        /* 確保所有輸入欄位都能正常顯示 */
+        #createSingleMode .filter-input:not(#createContent),
+        #createSingleMode .filter-select {
+            position: relative;
+            z-index: 1;
+        }
+        
+        #createSingleMode .filter-input:not(#createContent):focus,
+        #createSingleMode .filter-select:focus {
+            z-index: 5;
+        }
+        
+        /* 確保開立事項內容在 focus 時有最高的 z-index */
+        #createContent:focus {
+            z-index: 25;
+        }
+        
+        /* 確保辦理情形區塊中的 textarea 也有足夠的 z-index */
+        #createHandlingRoundsContainer textarea {
+            position: relative;
+            z-index: 2;
+        }
+        
+        #createHandlingRoundsContainer textarea:focus {
+            z-index: 6;
+        }
+
+        /* 檢查計畫規劃月曆 */
+        .schedule-calendar {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        .schedule-cal-head {
+            background: #e2e8f0;
+            padding: 8px 4px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #475569;
+            text-align: center;
+        }
+        .schedule-cal-day {
+            background: #fff;
+            min-height: 60px;
+            padding: 4px;
+            font-size: 13px;
+            color: #334155;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-start;
+            cursor: pointer;
+            transition: background 0.15s;
+            position: relative;
+        }
+        .schedule-cal-day:hover {
+            background: #f1f5f9;
+        }
+        .schedule-cal-day.has-plan {
+            background: #eff6ff;
+        }
+        .schedule-cal-day.has-plan:hover {
+            filter: brightness(0.96);
+        }
+        .schedule-cal-day.schedule-cal-plan-0 { background: #dbeafe; }
+        .schedule-cal-day.schedule-cal-plan-1 { background: #dcfce7; }
+        .schedule-cal-day.schedule-cal-plan-2 { background: #fef3c7; }
+        .schedule-cal-day.schedule-cal-plan-3 { background: #fce7f3; }
+        .schedule-cal-day.schedule-cal-plan-4 { background: #e0e7ff; }
+        .schedule-cal-day.schedule-cal-plan-5 { background: #d1fae5; }
+        .schedule-cal-day.schedule-cal-plan-6 { background: #fed7aa; }
+        .schedule-cal-day.schedule-cal-plan-7 { background: #e9d5ff; }
+        .schedule-cal-pad {
+            background: #f8fafc;
+            cursor: default;
+        }
+        .schedule-cal-pad:hover {
+            background: #f8fafc;
+        }
+        .schedule-cal-day-num {
+            font-weight: 600;
+            font-size: 13px;
+            margin-bottom: 2px;
+        }
+        .schedule-cal-dots {
+            display: flex;
+            gap: 3px;
+            flex-wrap: wrap;
+            margin-bottom: 2px;
+        }
+        .schedule-cal-color-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+        .schedule-cal-plan-names {
+            font-size: 12px;
+            line-height: 1.5;
+            width: 100%;
+            word-break: break-word;
+            max-height: 140px;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+        .schedule-cal-day-num-wrap { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 4px; margin-bottom: 2px; }
+        .schedule-cal-day-count { font-size: 10px; color: #64748b; font-weight: 600; background: rgba(0,0,0,0.06); padding: 2px 6px; border-radius: 4px; }
+        .schedule-cal-plan-name { font-weight: 600; font-size: 12px; display: block; }
+        .schedule-cal-plan-detail { font-size: 11px; display: block; }
+        .schedule-cal-plan-item { margin-bottom: 3px; }
+        .schedule-cal-day.has-plan { cursor: pointer; }
+        .schedule-cal-sep { color: #94a3b8; font-weight: 400; }
+        .schedule-cal-holiday {
+            background-color: #fef2f2 !important;
+        }
+        .schedule-cal-holiday .schedule-cal-day-num {
+            color: #dc2626;
+            font-weight: 700;
+        }
+        .schedule-cal-holiday-tag {
+            font-size: 10px;
+            color: #dc2626;
+            font-weight: 600;
+            margin-bottom: 2px;
+            display: block;
+        }
+        @media print {
+            .schedule-cal-plan-names { font-size: 14px; }
+            .schedule-cal-plan-name { font-size: 14px; }
+        }
+
+        /* 檢查計畫編輯視窗（重新設計） */
+        .plan-edit-modal .plan-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 16px;
+            margin-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .plan-edit-modal .plan-modal-header h3 { color: #334155; font-size: 18px; }
+        .plan-modal-close {
+            width: 36px;
+            height: 36px;
+            border: none;
+            background: #f1f5f9;
+            border-radius: 8px;
+            font-size: 22px;
+            line-height: 1;
+            color: #64748b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.2s, color 0.2s;
+        }
+        .plan-modal-close:hover {
+            background: #e2e8f0;
+            color: #334155;
+        }
+        .plan-modal-body { padding: 0 0 16px 0; }
+        .plan-form-section {
+            background: #f8fafc;
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px;
+            border: 1px solid #e2e8f0;
+        }
+        .plan-section-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #475569;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .plan-form-row {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 12px;
+        }
+        .plan-form-row:last-child { margin-bottom: 0; }
+        .plan-form-half { flex: 1; min-width: 0; }
+        .plan-form-half .form-group { margin-bottom: 0; }
+        .plan-schedules-empty {
+            font-size: 12px;
+            color: #94a3b8;
+            text-align: center;
+            padding: 16px 0;
+        }
+        .plan-schedule-item {
+            cursor: pointer;
+            padding: 10px 12px;
+            border-radius: 8px;
+            margin-bottom: 6px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .plan-schedule-item:hover { background: #f0f9ff; border-color: #bae6fd; }
+        .plan-schedule-item.selected { background: #eff6ff; border-color: #2563eb; }
+        .plan-schedule-item .schedule-row-top { display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: #334155; }
+        .plan-schedule-item .schedule-row-top .plan-number { color: #2563eb; font-weight: 600; }
+        .plan-schedule-item .schedule-row-detail { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .plan-modal-footer {
+            display: flex;
+            gap: 12px;
+            padding-top: 16px;
+            border-top: 1px solid var(--border);
+        }
+        .plan-modal-footer .btn { flex: 1; }
+        .schedule-calendar-toolbar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+        .schedule-calendar-toolbar .btn { flex-shrink: 0; }
+        .schedule-calendar-toolbar #scheduleMonthTitle { flex-shrink: 0; }
+
+        /* 計畫管理表格：標題與內容對齊 */
+        .user-table thead th { text-align: left; padding: 12px 16px; vertical-align: middle; font-weight: 600; }
+        .user-table tbody td { padding: 12px 16px; vertical-align: middle; }
+        .user-table thead th:first-child { padding-left: 16px; }
+
+        /* 編輯計畫視窗 v2：跳出框架重新設計 */
+        .plan-edit-modal-v2 {
+            max-width: 900px;
+            width: 95%;
+            max-height: 92vh;
+            display: flex;
+            flex-direction: column;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+            border: 1px solid #e2e8f0;
+            background: #fff;
+        }
+        .plan-edit-modal-v2 .plan-modal-header {
+            padding: 24px 28px;
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+            border-bottom: 2px solid #e2e8f0;
+            border-radius: 16px 16px 0 0;
+            flex-shrink: 0;
+        }
+        .plan-edit-modal-v2 .plan-modal-header h3 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 700;
+            color: #0f172a;
+        }
+        .plan-edit-modal-v2 .plan-modal-body {
+            padding: 24px 28px;
+            overflow-y: auto;
+            flex: 1;
+            min-height: 0;
+        }
+        .plan-edit-modal-v2 .plan-form-section {
+            background: #fff;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 2px solid #e2e8f0;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.04);
+        }
+        .plan-edit-modal-v2 .plan-form-section:last-of-type {
+            margin-bottom: 0;
+        }
+        .plan-edit-modal-v2 .plan-section-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+        .plan-section-icon { font-size: 18px; }
+        .plan-section-hint { font-weight: 400; color: #64748b; font-size: 12px; margin-left: 4px; }
+        .plan-edit-modal-v2 .plan-form-row { margin-bottom: 18px; }
+        .plan-edit-modal-v2 .plan-form-row:last-child { margin-bottom: 0; }
+        .plan-edit-modal-v2 .plan-modal-footer {
+            padding: 20px 28px 24px;
+            border-top: 2px solid #e2e8f0;
+            background: #f8fafc;
+            border-radius: 0 0 16px 16px;
+            flex-shrink: 0;
+        }
+        .plan-schedules-list {
+            max-height: 280px;
+            overflow-y: auto;
+            border-radius: 10px;
+            background: #f8fafc;
+            border: 2px solid #e2e8f0;
+            padding: 12px;
+        }
+        .plan-schedules-list-no-scroll {
+            max-height: none;
+            overflow-y: visible;
+        }
+        @media (max-width: 768px) {
+            .plan-edit-modal-v2 { width: 100%; max-width: 100%; max-height: 95vh; border-radius: 12px; margin: 8px; }
+            .plan-edit-modal-v2 .plan-modal-header { padding: 18px 16px; border-radius: 12px 12px 0 0; }
+            .plan-edit-modal-v2 .plan-modal-header h3 { font-size: 18px; }
+            .plan-edit-modal-v2 .plan-modal-body { padding: 16px; overflow-y: auto; }
+            .plan-edit-modal-v2 .plan-form-section { padding: 16px; margin-bottom: 16px; }
+            .plan-edit-modal-v2 .plan-section-title { font-size: 14px; margin-bottom: 14px; }
+            .plan-edit-modal-v2 .plan-form-row { flex-direction: column; gap: 12px; margin-bottom: 14px; }
+            .plan-edit-modal-v2 .plan-form-half { width: 100%; }
+            .plan-edit-modal-v2 .plan-modal-footer { padding: 16px; margin: 0; border-radius: 0 0 12px 12px; }
+            .plan-edit-modal-v2 .plan-modal-footer .btn { min-height: 44px; font-size: 15px; }
+            .plan-schedules-list { max-height: 240px; }
+            .data-container { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+            .user-table { min-width: 700px; }
+        }

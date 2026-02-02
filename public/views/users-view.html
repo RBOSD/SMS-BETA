@@ -1,0 +1,396 @@
+<div class="content-header">
+    <div class="content-title">後台管理</div>
+</div>
+<div class="admin-tabs">
+    <button class="admin-tab-btn active" onclick="switchAdminTab('users')">帳號列表</button>
+    <button class="admin-tab-btn" onclick="switchAdminTab('logs')">登入紀錄</button>
+    <button class="admin-tab-btn" onclick="switchAdminTab('actions')">操作歷程</button>
+    <button class="admin-tab-btn" onclick="switchAdminTab('system')">系統維護</button>
+</div>
+
+<!-- Users Tab -->
+<div id="tab-users" class="main-card">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:16px; flex-wrap:wrap; gap:12px;">
+        <div style="flex:1; min-width:200px;">
+            <h3 style="margin:0 0 8px 0; font-weight:800; font-size:18px; color:#334155;">帳號與群組管理</h3>
+            <p style="margin:0; color:#64748b; font-size:13px; line-height:1.6;">
+                在同一頁面完成帳號、權限與群組管理。群組用於資料的「同群組可編輯」控管。
+            </p>
+        </div>
+        <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-start;">
+            <button class="btn btn-primary" onclick="openUserModal('create')">➕ 新增使用者</button>
+            <button class="btn btn-outline" onclick="openUserImportModal()">📥 整批匯入</button>
+        </div>
+    </div>
+
+    <!-- 後台雙欄：左帳號、右群組 -->
+    <div class="admin-users-layout" id="adminUsersLayout">
+        <!-- Left: Users -->
+        <div class="detail-card admin-users-left" style="margin:0; min-width:0;">
+            <div style="display:flex; justify-content:space-between; gap:12px; align-items:flex-end; flex-wrap:wrap; padding-bottom:12px; border-bottom:1px solid var(--border);">
+                <div style="min-width:220px;">
+                    <div style="font-weight:800; color:#334155; font-size:16px;">👤 使用者列表</div>
+                    <div style="color:#64748b; font-size:13px; margin-top:4px;">可編輯姓名、帳號、權限與群組隸屬。</div>
+                </div>
+                <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap; min-width:300px; justify-content:flex-end; flex:1;">
+                    <input id="userSearch" class="filter-input" placeholder="搜尋姓名、帳號..." style="max-width:320px;" oninput="loadUsersPage(1)" autocomplete="off">
+                    <select id="usersPageSize" class="page-size-select" onchange="loadUsersPage(1)" style="width:130px;">
+                        <option value="10">10 筆/頁</option>
+                        <option value="20" selected>20 筆/頁</option>
+                        <option value="50">50 筆/頁</option>
+                    </select>
+                    <button class="btn btn-outline" onclick="loadUsersPage(1)">搜尋</button>
+                </div>
+            </div>
+            <div id="usersPaginationTop" class="pagination-bar" style="padding:12px 0 8px; justify-content:flex-end;"></div>
+            <div class="data-container">
+                <table class="user-table">
+                    <thead>
+                        <tr>
+                            <th style="padding:16px;" onclick="usersSortBy('name')">姓名</th>
+                            <th onclick="usersSortBy('username')">帳號</th>
+                            <th style="min-width:220px;">群組</th>
+                            <th onclick="usersSortBy('role')">權限</th>
+                            <th onclick="usersSortBy('created_at')">註冊時間</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="usersTableBody"></tbody>
+                </table>
+            </div>
+            <div id="usersPaginationBottom" class="pagination-bar" style="padding:12px 0 0; justify-content:center;"></div>
+        </div>
+
+        <!-- Right: Groups -->
+        <div class="detail-card admin-users-right" style="margin:0; min-width:0;">
+            <div style="display:flex; align-items:flex-start; justify-content:space-between; gap:12px; flex-wrap:wrap; padding-bottom:12px; border-bottom:1px solid var(--border);">
+                <div style="min-width:180px;">
+                    <div style="font-weight:800; color:#334155; font-size:16px;">👥 群組管理</div>
+                    <div style="color:#64748b; font-size:13px; margin-top:4px; line-height:1.6;">
+                        點選群組（像資料夾）後，可在下方新增/移除使用者。
+                    </div>
+                </div>
+                <div style="display:flex; gap:8px; align-items:center;">
+                    <button id="btnToggleGroupsPanel" class="btn btn-outline btn-sm" onclick="toggleGroupsPanelSize()" title="放大/縮小群組管理">⤢ 放大</button>
+                </div>
+            </div>
+            <div style="margin-top:12px; border:1px solid var(--border); border-radius:12px; background:#ffffff; padding:12px;">
+                <div style="font-weight:800; color:#334155; font-size:13px; margin-bottom:8px;">新增群組</div>
+                <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+                    <input id="newGroupName" class="filter-input" placeholder="例如：工務組 / 運務組 / 審查組" style="flex:1; min-width:220px;" autocomplete="off">
+                    <button class="btn btn-primary btn-sm" onclick="createGroupAdmin()">➕ 建立</button>
+                </div>
+                <div style="margin-top:8px; font-size:12px; color:#64748b; line-height:1.5;">
+                    建立後可點選群組（📁）進入管理成員。
+                </div>
+            </div>
+            <div id="groupsFolderList" style="margin-top:12px; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:#ffffff;">
+                <div style="padding:10px 12px; background:#f8fafc; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; gap:10px;">
+                    <div style="font-weight:800; color:#334155; font-size:13px;">群組清單</div>
+                    <button class="btn btn-outline btn-sm" onclick="loadGroupsAdmin()" title="重新載入群組">⟳ 刷新</button>
+                </div>
+                <div id="groupsFolderListBody" style="max-height: var(--groups-list-max, 240px); overflow:auto;">
+                    <div style="padding:12px; color:#64748b; font-size:13px;">載入中…</div>
+                </div>
+            </div>
+
+            <div id="groupDetailCard" style="margin-top:12px; border:1px solid var(--border); border-radius:12px; overflow:hidden; background:#ffffff;">
+                <div style="padding:10px 12px; background:#f8fafc; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                    <div>
+                        <div style="font-weight:800; color:#334155; font-size:13px;">所選群組</div>
+                        <div id="selectedGroupName" style="color:#64748b; font-size:12px; margin-top:2px;">（請先選擇群組）</div>
+                    </div>
+                    <button class="btn btn-outline btn-sm" onclick="openRenameSelectedGroup()" title="更名所選群組">✏️ 更名</button>
+                </div>
+                <div style="padding:12px;">
+                    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px;">
+                        <input id="groupUserSearch" class="filter-input" placeholder="搜尋使用者（姓名/帳號）..." style="flex:1; min-width:200px;" autocomplete="off" oninput="renderSelectedGroupMembers()">
+                    </div>
+                    <div id="groupMembersBody" style="max-height: var(--group-members-max, 320px); overflow:auto; border:1px solid var(--border); border-radius:10px; padding:8px; background:#f8fafc;">
+                        <div style="padding:8px; color:#64748b; font-size:13px;">請先選擇群組</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Login Logs Tab -->
+<div id="tab-logs" class="main-card hidden">
+    <div style="margin-bottom:24px;">
+        <h3 style="margin:0 0 8px 0; font-weight:700; font-size:18px; color:#334155;">登入紀錄</h3>
+        <p style="margin:0; color:#64748b; font-size:13px;">
+            查看系統使用者的登入紀錄，包含登入時間、帳號和 IP 位址。可匯出資料或清理舊紀錄。
+        </p>
+    </div>
+    
+    <div
+        style="padding:16px; border-bottom:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; background:#ffffff; flex-wrap:wrap;">
+        <input id="loginSearch" class="filter-input" placeholder="搜尋所有內容" style="width:240px;"
+            oninput="loadLogsPage(1)" autocomplete="off">
+        <button class="btn btn-outline btn-sm" onclick="exportLogs('login')">匯出 CSV</button>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <select id="loginCleanupDays" class="filter-select" style="width:140px;">
+                <option value="30">保留30天</option>
+                <option value="60">保留60天</option>
+                <option value="90">保留90天</option>
+                <option value="180">保留180天</option>
+                <option value="365">保留365天</option>
+                <option value="custom">自訂天數</option>
+                <option value="all">刪除全部</option>
+            </select>
+            <input id="loginCustomDays" type="number" min="1" placeholder="天數" 
+                class="filter-input hidden" style="width:80px;">
+            <button class="btn btn-danger btn-sm" onclick="deleteLogsFromDB('login')">刪除資料庫記錄</button>
+        </div>
+    </div>
+    <div id="logsPaginationTop" class="pagination-bar"
+        style="padding:16px; border-bottom:1px solid var(--border); justify-content: flex-end;"></div>
+    <div class="data-container">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th style="padding:16px;">時間</th>
+                    <th>帳號</th>
+                    <th>IP 位址</th>
+                </tr>
+            </thead>
+            <tbody id="logsTableBody"></tbody>
+        </table>
+    </div>
+    <div id="logsPaginationBottom" class="pagination-bar" style="padding:16px; justify-content: center;"></div>
+</div>
+
+<!-- Action Logs Tab -->
+<div id="tab-actions" class="main-card hidden">
+    <div style="margin-bottom:24px;">
+        <h3 style="margin:0 0 8px 0; font-weight:700; font-size:18px; color:#334155;">操作歷程</h3>
+        <p style="margin:0; color:#64748b; font-size:13px;">
+            查看系統使用者的操作歷程紀錄，包含操作時間、帳號、動作和詳細內容。可匯出資料或清理舊紀錄。
+        </p>
+    </div>
+    
+    <div
+        style="padding:16px; border-bottom:1px solid var(--border); display:flex; justify-content:flex-end; gap:12px; background:#ffffff; flex-wrap:wrap;">
+        <input id="actionSearch" class="filter-input" placeholder="搜尋所有內容" style="width:240px;"
+            oninput="loadActionsPage(1)" autocomplete="off">
+        <button class="btn btn-outline btn-sm" onclick="exportLogs('action')">匯出 CSV</button>
+        <div style="display:flex; gap:8px; align-items:center;">
+            <select id="actionCleanupDays" class="filter-select" style="width:140px;">
+                <option value="30">保留30天</option>
+                <option value="60">保留60天</option>
+                <option value="90">保留90天</option>
+                <option value="180">保留180天</option>
+                <option value="365">保留365天</option>
+                <option value="custom">自訂天數</option>
+                <option value="all">刪除全部</option>
+            </select>
+            <input id="actionCustomDays" type="number" min="1" placeholder="天數" 
+                class="filter-input hidden" style="width:80px;">
+            <button class="btn btn-danger btn-sm" onclick="deleteLogsFromDB('action')">刪除資料庫記錄</button>
+        </div>
+    </div>
+    <div id="actionsPaginationTop" class="pagination-bar"
+        style="padding:16px; border-bottom:1px solid var(--border); justify-content: flex-end;"></div>
+    <div class="data-container">
+        <table class="user-table">
+            <thead>
+                <tr>
+                    <th style="padding:16px;">時間</th>
+                    <th>帳號</th>
+                    <th>動作</th>
+                    <th>詳細內容</th>
+                </tr>
+            </thead>
+            <tbody id="actionsTableBody"></tbody>
+        </table>
+    </div>
+    <div id="actionsPaginationBottom" class="pagination-bar" style="padding:16px; justify-content: center;">
+    </div>
+</div>
+
+<!-- System Tab -->
+<div id="tab-system" class="main-card hidden">
+    <div style="margin-bottom:24px;">
+        <h3 style="margin:0 0 8px 0; font-weight:700; font-size:18px; color:#334155;">系統維護</h3>
+        <p style="margin:0; color:#64748b; font-size:13px; line-height:1.6;">
+            提供系統資料匯出、資料救援（還原備份）、以及檢查計畫匯入 Excel 範例檔管理。
+        </p>
+    </div>
+
+    <!-- 匯入範例檔管理（檢查計畫 / 帳號） -->
+    <div class="detail-card" style="margin-bottom:30px;">
+        <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px 0; font-weight:600; color:#334155; font-size:16px;">📄 匯入範例檔管理</h4>
+            <p style="color:#64748b; font-size:13px; margin:0;">
+                可上傳並設為系統範例檔；未設定時會使用系統預設範例。
+            </p>
+        </div>
+
+        <div style="display:flex; gap:16px; flex-wrap:wrap;">
+            <div style="flex:1; min-width:280px; border:1px solid #e2e8f0; background:#f8fafc; border-radius:12px; padding:14px;">
+                <div style="font-weight:700; color:#334155; margin-bottom:10px;">檢查計畫（Excel）</div>
+                <input type="file" id="planTemplateFile" accept=".xlsx" style="display:none;">
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <button class="btn btn-outline" onclick="downloadPlanXlsxTemplate()">📥 下載 Excel 範例</button>
+                    <button class="btn btn-primary" onclick="uploadPlanXlsxTemplate()">📤 上傳並設為範例</button>
+                </div>
+            </div>
+
+            <div style="flex:1; min-width:280px; border:1px solid #e2e8f0; background:#f8fafc; border-radius:12px; padding:14px;">
+                <div style="font-weight:700; color:#334155; margin-bottom:10px;">帳號（CSV）</div>
+                <input type="file" id="userTemplateFile" accept=".csv" style="display:none;">
+                <div style="display:flex; gap:12px; flex-wrap:wrap;">
+                    <button class="btn btn-outline" onclick="downloadUserCSVTemplate()">📥 下載匯入範例</button>
+                    <button class="btn btn-primary" onclick="uploadUserCSVTemplate()">📤 上傳並設為範例</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 系統資料匯出 -->
+    <div class="detail-card" style="margin-bottom:30px;">
+        <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px 0; font-weight:600; color:#334155; font-size:16px;">📤 系統資料匯出</h4>
+            <p style="color:#64748b; font-size:13px; margin:0;">
+                將系統中的資料匯出為檔案。Excel 格式適合 Excel 編輯與分析，JSON 格式適合系統備份與還原（僅管理員）。
+            </p>
+        </div>
+
+        <!-- 步驟 1: 選擇匯出資料類型 -->
+        <div style="background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:20px; border:1px solid #e2e8f0;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <div style="width:28px; height:28px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;">1</div>
+                <label style="font-weight:600; color:#475569; font-size:14px; margin:0; cursor:default;">選擇匯出資料類型</label>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:12px; margin-left:36px;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px; background:white; border-radius:8px; border:2px solid #e2e8f0; transition:all 0.2s;" 
+                    onmouseover="this.style.borderColor='#2563eb'; this.style.backgroundColor='#eff6ff';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
+                    <input type="radio" name="exportDataType" value="issues" checked style="cursor:pointer;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600; color:#334155; font-size:14px;">僅匯出開立事項</div>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;">匯出所有開立事項的資料</div>
+                    </div>
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px; background:white; border-radius:8px; border:2px solid #e2e8f0; transition:all 0.2s;" 
+                    onmouseover="this.style.borderColor='#2563eb'; this.style.backgroundColor='#eff6ff';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
+                    <input type="radio" name="exportDataType" value="plans" style="cursor:pointer;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600; color:#334155; font-size:14px;">僅匯出檢查計畫</div>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;">匯出所有檢查計畫的資料</div>
+                    </div>
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px; background:white; border-radius:8px; border:2px solid #e2e8f0; transition:all 0.2s;" 
+                    onmouseover="this.style.borderColor='#2563eb'; this.style.backgroundColor='#eff6ff';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
+                    <input type="radio" name="exportDataType" value="both" style="cursor:pointer;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600; color:#334155; font-size:14px;">匯出開立事項與檢查計畫（合併）</div>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;">同時匯出開立事項和檢查計畫的完整資料</div>
+                    </div>
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px; background:white; border-radius:8px; border:2px solid #e2e8f0; transition:all 0.2s;" 
+                    onmouseover="this.style.borderColor='#2563eb'; this.style.backgroundColor='#eff6ff';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
+                    <input type="radio" name="exportDataType" value="users" style="cursor:pointer;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600; color:#334155; font-size:14px;">僅匯出帳號</div>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;">匯出系統帳號（不含密碼）</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <!-- 步驟 2: 選擇匯出內容（開立事項） -->
+        <div id="exportIssuesOptions" style="background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:20px; border:1px solid #e2e8f0;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <div style="width:28px; height:28px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;">2</div>
+                <label style="font-weight:600; color:#475569; font-size:14px; margin:0; cursor:default;">選擇匯出內容（開立事項）</label>
+            </div>
+            <div style="display:flex; gap:16px; margin-left:36px; flex-wrap:wrap;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px 20px; background:white; border-radius:8px; border:2px solid #e2e8f0; transition:all 0.2s; flex:1; min-width:200px;" 
+                    onmouseover="this.style.borderColor='#2563eb'; this.style.backgroundColor='#eff6ff';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
+                    <input type="radio" name="exportScope" value="latest" checked style="cursor:pointer;">
+                    <div style="font-weight:600; color:#334155; font-size:14px;">僅匯出最新進度</div>
+                </label>
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px 20px; background:white; border-radius:8px; border:2px solid #e2e8f0; transition:all 0.2s; flex:1; min-width:200px;" 
+                    onmouseover="this.style.borderColor='#2563eb'; this.style.backgroundColor='#eff6ff';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
+                    <input type="radio" name="exportScope" value="full" style="cursor:pointer;">
+                    <div style="font-weight:600; color:#334155; font-size:14px;">匯出完整歷程</div>
+                </label>
+            </div>
+        </div>
+
+        <!-- 步驟 3: 選擇檔案格式 -->
+        <div style="background:#f8fafc; padding:20px; border-radius:12px; margin-bottom:24px; border:1px solid #e2e8f0;">
+            <div style="display:flex; align-items:center; gap:8px; margin-bottom:16px;">
+                <div style="width:28px; height:28px; background:linear-gradient(135deg, #667eea 0%, #764ba2 100%); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px; flex-shrink:0;">3</div>
+                <label style="font-weight:600; color:#475569; font-size:14px; margin:0; cursor:default;">選擇檔案格式</label>
+            </div>
+            <div style="display:flex; gap:16px; margin-left:36px; flex-wrap:wrap;">
+                <label style="cursor:pointer; display:flex; align-items:center; gap:10px; padding:12px 20px; background:white; border-radius:8px; border:2px solid #e2e8f0; transition:all 0.2s; flex:1; min-width:200px;" 
+                    onmouseover="this.style.borderColor='#2563eb'; this.style.backgroundColor='#eff6ff';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
+                    <input type="radio" name="exportFormat" value="excel" checked style="cursor:pointer;">
+                    <div>
+                        <div style="font-weight:600; color:#334155; font-size:14px;">Excel (.xlsx)</div>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;">適合 Excel 編輯與分析</div>
+                    </div>
+                </label>
+                <label id="exportJsonOption" style="cursor:pointer; display:none; align-items:center; gap:10px; padding:12px 20px; background:white; border-radius:8px; border:2px solid #e2e8f0; transition:all 0.2s; flex:1; min-width:200px;" 
+                    onmouseover="this.style.borderColor='#2563eb'; this.style.backgroundColor='#eff6ff';" 
+                    onmouseout="this.style.borderColor='#e2e8f0'; this.style.backgroundColor='white';">
+                    <input type="radio" name="exportFormat" value="json" style="cursor:pointer;">
+                    <div>
+                        <div style="font-weight:600; color:#334155; font-size:14px;">JSON (備份用)</div>
+                        <div style="font-size:12px; color:#64748b; margin-top:2px;">適合系統備份與還原</div>
+                    </div>
+                </label>
+            </div>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; padding-top:20px; border-top:1px solid #e2e8f0;">
+            <button class="btn btn-primary" onclick="exportAllData()" style="padding:12px 32px;">
+                📥 執行匯出
+            </button>
+        </div>
+    </div>
+
+    <!-- 資料救援（還原備份） -->
+    <div class="detail-card hidden" id="uploadCardBackup">
+        <div style="margin-bottom:16px;">
+            <h4 style="margin:0 0 8px 0; font-weight:600; color:#334155; font-size:16px;">🚑 資料救援（還原備份）</h4>
+            <p style="color:#64748b; font-size:13px; margin:0;">
+                用於資料庫清空後的災難復原。支援 CSV 或 JSON 格式（僅管理員）。
+            </p>
+        </div>
+        <div style="margin-bottom:16px;">
+            <label style="font-weight:600; color:#475569; font-size:13px; margin-bottom:8px; display:block;">選擇備份檔案（.csv / .json）</label>
+            <input type="file" id="backupInput" class="filter-input" accept=".csv, .json" style="width:100%; padding:8px;">
+        </div>
+        <button id="btnParseBackup" class="btn btn-danger" style="width:100%; padding:12px;" onclick="previewBackup()">解析並還原備份資料</button>
+        <div id="importStatusBackup" style="margin-top:12px;color:#64748b;font-size:13px;text-align:center;"></div>
+    </div>
+</div>
+
+<div id="logsLoading" style="display:none; padding:30px; text-align:center; color:#64748b;">⏳ 載入紀錄中...</div>
+
+<!-- User Import Modal（整批匯入帳號） -->
+<div class="modal-overlay" id="userImportModal">
+    <div class="modal-box" style="max-width:600px;">
+        <h3 style="margin-top:0;">整批匯入帳號（CSV）</h3>
+        <div class="form-group">
+            <label>選擇匯入檔案（.csv）</label>
+            <input type="file" id="userImportModalFile" accept=".csv" class="filter-input">
+        </div>
+        <div style="display:flex;gap:12px;margin-top:24px;flex-wrap:wrap;">
+            <button class="btn btn-primary" style="flex:1;" onclick="importUsersCSVFromModal()">📥 執行匯入</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="closeUserImportModal()">取消</button>
+            <button class="btn btn-outline" style="flex:1;" onclick="downloadUserCSVTemplate()">📥 下載匯入範例</button>
+        </div>
+    </div>
+</div>

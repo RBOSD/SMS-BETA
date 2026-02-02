@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSRF 保護測試</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            border-bottom: 2px solid #4CAF50;
+            padding-bottom: 10px;
+        }
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        .test-section h2 {
+            margin-top: 0;
+            color: #2196F3;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.danger {
+            background: #f44336;
+        }
+        button.danger:hover {
+            background: #da190b;
+        }
+        button.info {
+            background: #2196F3;
+        }
+        button.info:hover {
+            background: #0b7dda;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            min-height: 100px;
+            white-space: pre-wrap;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .warning {
+            color: #ff9800;
+            font-weight: bold;
+        }
+        .info {
+            color: #2196F3;
+        }
+        .test-item {
+            margin: 15px 0;
+            padding: 10px;
+            background: white;
+            border-radius: 4px;
+            border: 1px solid #e0e0e0;
+        }
+        .test-item h3 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .status {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        .status.pending {
+            background: #ff9800;
+            color: white;
+        }
+        .status.success {
+            background: #4CAF50;
+            color: white;
+        }
+        .status.failed {
+            background: #f44336;
+            color: white;
+        }
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: #e3f2fd;
+            border-radius: 5px;
+            border-left: 4px solid #2196F3;
+        }
+        .summary h2 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔒 CSRF 保護測試工具</h1>
+        
+        <div class="test-section">
+            <h2>快速測試</h2>
+            <p>請先確保您已經登入系統，然後點擊下方按鈕進行測試。</p>
+            <button onclick="runAllTests()">執行所有測試</button>
+            <button onclick="testWithoutToken()" class="danger">測試沒有 CSRF Token</button>
+            <button onclick="testWithToken()" class="info">測試有 CSRF Token</button>
+            <button onclick="testGetRequest()" class="info">測試 GET 請求（不需要 Token）</button>
+            <button onclick="clearResults()">清除結果</button>
+        </div>
+
+        <div class="test-section">
+            <h2>詳細測試項目</h2>
+            
+            <div class="test-item">
+                <h3>1. GET 請求不需要 CSRF token <span id="test1-status" class="status pending">待測試</span></h3>
+                <p>測試 GET /api/users 請求，應該正常運作且不需要 CSRF token。</p>
+                <button onclick="test1()">執行測試</button>
+            </div>
+
+            <div class="test-item">
+                <h3>2. POST 請求沒有 CSRF token 應該被拒絕 <span id="test2-status" class="status pending">待測試</span></h3>
+                <p>測試 POST /api/users 請求（沒有 token），應該收到 403 錯誤。</p>
+                <button onclick="test2()">執行測試</button>
+            </div>
+
+            <div class="test-item">
+                <h3>3. POST 請求有 CSRF token 應該正常運作 <span id="test3-status" class="status pending">待測試</span></h3>
+                <p>測試 POST /api/users 請求（有 token），應該正常運作或收到業務邏輯錯誤（不是 CSRF 錯誤）。</p>
+                <button onclick="test3()">執行測試</button>
+            </div>
+
+            <div class="test-item">
+                <h3>4. PUT 請求沒有 CSRF token 應該被拒絕 <span id="test4-status" class="status pending">待測試</span></h3>
+                <p>測試 PUT 請求（沒有 token），應該收到 403 錯誤。</p>
+                <button onclick="test4()">執行測試</button>
+            </div>
+
+            <div class="test-item">
+                <h3>5. DELETE 請求沒有 CSRF token 應該被拒絕 <span id="test5-status" class="status pending">待測試</span></h3>
+                <p>測試 DELETE 請求（沒有 token），應該收到 403 錯誤。</p>
+                <button onclick="test5()">執行測試</button>
+            </div>
+
+            <div class="test-item">
+                <h3>6. 登入路由不需要 CSRF token <span id="test6-status" class="status pending">待測試</span></h3>
+                <p>測試 POST /api/auth/login 請求（沒有 token），應該正常運作（登入成功或失敗，但不是 CSRF 錯誤）。</p>
+                <button onclick="test6()">執行測試</button>
+            </div>
+
+            <div class="test-item">
+                <h3>7. 前端自動取得 CSRF token <span id="test7-status" class="status pending">待測試</span></h3>
+                <p>測試是否可以成功取得 CSRF token。</p>
+                <button onclick="test7()">執行測試</button>
+            </div>
+        </div>
+
+        <div id="result"></div>
+
+        <div class="summary" id="summary" style="display: none;">
+            <h2>測試摘要</h2>
+            <div id="summary-content"></div>
+        </div>
+    </div>
+
+    <script>
+        let testResults = {};
+
+        function log(message, type = 'info') {
+            const resultDiv = document.getElementById('result');
+            const timestamp = new Date().toLocaleTimeString('zh-TW');
+            const className = type === 'error' ? 'error' : (type === 'success' ? 'success' : (type === 'warning' ? 'warning' : 'info'));
+            resultDiv.innerHTML += `<span class="${className}">[${timestamp}] ${message}</span>\n`;
+            resultDiv.scrollTop = resultDiv.scrollHeight;
+        }
+
+        function clearResults() {
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('summary').style.display = 'none';
+            // 重置所有狀態
+            for (let i = 1; i <= 7; i++) {
+                const statusEl = document.getElementById(`test${i}-status`);
+                if (statusEl) {
+                    statusEl.textContent = '待測試';
+                    statusEl.className = 'status pending';
+                }
+            }
+            testResults = {};
+        }
+
+        function updateTestStatus(testNum, status, message) {
+            const statusEl = document.getElementById(`test${testNum}-status`);
+            if (statusEl) {
+                statusEl.textContent = message;
+                statusEl.className = `status ${status}`;
+            }
+            testResults[testNum] = { status, message };
+            updateSummary();
+        }
+
+        function updateSummary() {
+            const summaryDiv = document.getElementById('summary');
+            const summaryContent = document.getElementById('summary-content');
+            const total = Object.keys(testResults).length;
+            const passed = Object.values(testResults).filter(r => r.status === 'success').length;
+            const failed = Object.values(testResults).filter(r => r.status === 'failed').length;
+            
+            if (total > 0) {
+                summaryDiv.style.display = 'block';
+                summaryContent.innerHTML = `
+                    <p><strong>總測試數：</strong> ${total}</p>
+                    <p class="success"><strong>通過：</strong> ${passed}</p>
+                    <p class="error"><strong>失敗：</strong> ${failed}</p>
+                    <p><strong>通過率：</strong> ${total > 0 ? Math.round((passed / total) * 100) : 0}%</p>
+                `;
+            }
+        }
+
+        async function getCsrfToken() {
+            try {
+                const res = await fetch('/api/csrf-token', {
+                    credentials: 'include'
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    return data.csrfToken;
+                }
+            } catch (e) {
+                log(`取得 CSRF token 失敗: ${e.message}`, 'error');
+            }
+            return null;
+        }
+
+        // 測試 1: GET 請求不需要 CSRF token
+        async function test1() {
+            log('開始測試 1: GET 請求不需要 CSRF token...', 'info');
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (res.ok) {
+                    const data = await res.json();
+                    log(`✓ 測試通過: GET 請求成功，不需要 CSRF token`, 'success');
+                    log(`  回應: ${JSON.stringify(data).substring(0, 100)}...`, 'info');
+                    updateTestStatus(1, 'success', '通過');
+                } else {
+                    log(`✗ 測試失敗: GET 請求失敗，狀態碼 ${res.status}`, 'error');
+                    updateTestStatus(1, 'failed', '失敗');
+                }
+            } catch (e) {
+                log(`✗ 測試失敗: ${e.message}`, 'error');
+                updateTestStatus(1, 'failed', '失敗');
+            }
+        }
+
+        // 測試 2: POST 請求沒有 CSRF token 應該被拒絕
+        async function test2() {
+            log('開始測試 2: POST 請求沒有 CSRF token 應該被拒絕...', 'info');
+            try {
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // 故意不加入 X-CSRF-Token
+                    },
+                    body: JSON.stringify({
+                        username: 'test_csrf_' + Date.now(),
+                        password: 'Test1234',
+                        name: 'CSRF 測試',
+                        role: 'viewer'
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (res.status === 403 && (data.error && data.error.includes('CSRF'))) {
+                    log(`✓ 測試通過: POST 請求沒有 token 被正確拒絕 (403)`, 'success');
+                    log(`  錯誤訊息: ${data.error}`, 'info');
+                    updateTestStatus(2, 'success', '通過');
+                } else {
+                    log(`✗ 測試失敗: 預期 403 CSRF 錯誤，但收到狀態碼 ${res.status}`, 'error');
+                    log(`  回應: ${JSON.stringify(data)}`, 'error');
+                    updateTestStatus(2, 'failed', '失敗');
+                }
+            } catch (e) {
+                log(`✗ 測試失敗: ${e.message}`, 'error');
+                updateTestStatus(2, 'failed', '失敗');
+            }
+        }
+
+        // 測試 3: POST 請求有 CSRF token 應該正常運作
+        async function test3() {
+            log('開始測試 3: POST 請求有 CSRF token 應該正常運作...', 'info');
+            try {
+                const token = await getCsrfToken();
+                if (!token) {
+                    log(`✗ 測試失敗: 無法取得 CSRF token`, 'error');
+                    updateTestStatus(3, 'failed', '失敗');
+                    return;
+                }
+                
+                log(`取得 CSRF token: ${token.substring(0, 20)}...`, 'info');
+                
+                const res = await fetch('/api/users', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': token
+                    },
+                    body: JSON.stringify({
+                        username: 'test_csrf_' + Date.now(),
+                        password: 'Test1234',
+                        name: 'CSRF 測試',
+                        role: 'viewer'
+                    })
+                });
+                
+                const data = await res.json();
+                
+                // 如果成功（200）或收到業務邏輯錯誤（400/500），但不是 CSRF 錯誤（403），則測試通過
+                if (res.status === 403 && data.error && data.error.includes('CSRF')) {
+                    log(`✗ 測試失敗: 即使有 token 仍收到 CSRF 錯誤`, 'error');
+                    updateTestStatus(3, 'failed', '失敗');
+                } else if (res.status === 200 || res.status === 400 || res.status === 500) {
+                    log(`✓ 測試通過: POST 請求有 token 正常運作`, 'success');
+                    log(`  狀態碼: ${res.status}`, 'info');
+                    log(`  回應: ${JSON.stringify(data).substring(0, 200)}...`, 'info');
+                    updateTestStatus(3, 'success', '通過');
+                } else {
+                    log(`⚠ 未預期的狀態碼: ${res.status}`, 'warning');
+                    log(`  回應: ${JSON.stringify(data)}`, 'info');
+                    updateTestStatus(3, 'success', '通過（未預期狀態）');
+                }
+            } catch (e) {
+                log(`✗ 測試失敗: ${e.message}`, 'error');
+                updateTestStatus(3, 'failed', '失敗');
+            }
+        }
+
+        // 測試 4: PUT 請求沒有 CSRF token 應該被拒絕
+        async function test4() {
+            log('開始測試 4: PUT 請求沒有 CSRF token 應該被拒絕...', 'info');
+            try {
+                // 先取得一個使用者 ID（假設至少有一個使用者）
+                const getRes = await fetch('/api/users?pageSize=1', {
+                    credentials: 'include'
+                });
+                
+                if (!getRes.ok) {
+                    log(`⚠ 無法取得使用者列表，跳過此測試`, 'warning');
+                    updateTestStatus(4, 'failed', '跳過');
+                    return;
+                }
+                
+                const getData = await getRes.json();
+                if (!getData.data || getData.data.length === 0) {
+                    log(`⚠ 沒有使用者可以測試，跳過此測試`, 'warning');
+                    updateTestStatus(4, 'failed', '跳過');
+                    return;
+                }
+                
+                const userId = getData.data[0].id;
+                log(`使用使用者 ID: ${userId} 進行測試`, 'info');
+                
+                const res = await fetch(`/api/users/${userId}`, {
+                    method: 'PUT',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // 故意不加入 X-CSRF-Token
+                    },
+                    body: JSON.stringify({
+                        name: '測試名稱'
+                    })
+                });
+                
+                const data = await res.json();
+                
+                if (res.status === 403 && (data.error && data.error.includes('CSRF'))) {
+                    log(`✓ 測試通過: PUT 請求沒有 token 被正確拒絕 (403)`, 'success');
+                    log(`  錯誤訊息: ${data.error}`, 'info');
+                    updateTestStatus(4, 'success', '通過');
+                } else {
+                    log(`✗ 測試失敗: 預期 403 CSRF 錯誤，但收到狀態碼 ${res.status}`, 'error');
+                    log(`  回應: ${JSON.stringify(data)}`, 'error');
+                    updateTestStatus(4, 'failed', '失敗');
+                }
+            } catch (e) {
+                log(`✗ 測試失敗: ${e.message}`, 'error');
+                updateTestStatus(4, 'failed', '失敗');
+            }
+        }
+
+        // 測試 5: DELETE 請求沒有 CSRF token 應該被拒絕
+        async function test5() {
+            log('開始測試 5: DELETE 請求沒有 CSRF token 應該被拒絕...', 'info');
+            log(`⚠ 注意: 此測試不會實際刪除資料，只測試 CSRF 保護`, 'warning');
+            
+            try {
+                // 先取得一個使用者 ID
+                const getRes = await fetch('/api/users?pageSize=1', {
+                    credentials: 'include'
+                });
+                
+                if (!getRes.ok) {
+                    log(`⚠ 無法取得使用者列表，跳過此測試`, 'warning');
+                    updateTestStatus(5, 'failed', '跳過');
+                    return;
+                }
+                
+                const getData = await getRes.json();
+                if (!getData.data || getData.data.length === 0) {
+                    log(`⚠ 沒有使用者可以測試，跳過此測試`, 'warning');
+                    updateTestStatus(5, 'failed', '跳過');
+                    return;
+                }
+                
+                const userId = getData.data[0].id;
+                log(`使用使用者 ID: ${userId} 進行測試`, 'info');
+                
+                const res = await fetch(`/api/users/${userId}`, {
+                    method: 'DELETE',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // 故意不加入 X-CSRF-Token
+                    }
+                });
+                
+                const data = await res.json();
+                
+                if (res.status === 403 && (data.error && data.error.includes('CSRF'))) {
+                    log(`✓ 測試通過: DELETE 請求沒有 token 被正確拒絕 (403)`, 'success');
+                    log(`  錯誤訊息: ${data.error}`, 'info');
+                    updateTestStatus(5, 'success', '通過');
+                } else {
+                    log(`✗ 測試失敗: 預期 403 CSRF 錯誤，但收到狀態碼 ${res.status}`, 'error');
+                    log(`  回應: ${JSON.stringify(data)}`, 'error');
+                    updateTestStatus(5, 'failed', '失敗');
+                }
+            } catch (e) {
+                log(`✗ 測試失敗: ${e.message}`, 'error');
+                updateTestStatus(5, 'failed', '失敗');
+            }
+        }
+
+        // 測試 6: 登入路由不需要 CSRF token
+        async function test6() {
+            log('開始測試 6: 登入路由不需要 CSRF token...', 'info');
+            log(`⚠ 注意: 此測試使用錯誤的憑證，預期登入失敗但不是 CSRF 錯誤`, 'warning');
+            
+            try {
+                const res = await fetch('/api/auth/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json'
+                        // 故意不加入 X-CSRF-Token
+                    },
+                    body: JSON.stringify({
+                        username: 'test_csrf_' + Date.now(),
+                        password: 'WrongPassword123'
+                    })
+                });
+                
+                const data = await res.json();
+                
+                // 登入路由應該正常運作（登入失敗是正常的），但不應該是 CSRF 錯誤
+                if (res.status === 403 && data.error && data.error.includes('CSRF')) {
+                    log(`✗ 測試失敗: 登入路由不應該需要 CSRF token，但收到 CSRF 錯誤`, 'error');
+                    updateTestStatus(6, 'failed', '失敗');
+                } else {
+                    log(`✓ 測試通過: 登入路由不需要 CSRF token`, 'success');
+                    log(`  狀態碼: ${res.status}`, 'info');
+                    log(`  回應: ${JSON.stringify(data).substring(0, 200)}...`, 'info');
+                    updateTestStatus(6, 'success', '通過');
+                }
+            } catch (e) {
+                log(`✗ 測試失敗: ${e.message}`, 'error');
+                updateTestStatus(6, 'failed', '失敗');
+            }
+        }
+
+        // 測試 7: 前端自動取得 CSRF token
+        async function test7() {
+            log('開始測試 7: 前端自動取得 CSRF token...', 'info');
+            try {
+                const token = await getCsrfToken();
+                if (token) {
+                    log(`✓ 測試通過: 成功取得 CSRF token`, 'success');
+                    log(`  Token: ${token.substring(0, 30)}...`, 'info');
+                    updateTestStatus(7, 'success', '通過');
+                } else {
+                    log(`✗ 測試失敗: 無法取得 CSRF token`, 'error');
+                    updateTestStatus(7, 'failed', '失敗');
+                }
+            } catch (e) {
+                log(`✗ 測試失敗: ${e.message}`, 'error');
+                updateTestStatus(7, 'failed', '失敗');
+            }
+        }
+
+        // 快速測試函數
+        async function testWithoutToken() {
+            clearResults();
+            log('=== 測試沒有 CSRF Token 的 POST 請求 ===', 'info');
+            await test2();
+        }
+
+        async function testWithToken() {
+            clearResults();
+            log('=== 測試有 CSRF Token 的 POST 請求 ===', 'info');
+            await test3();
+        }
+
+        async function testGetRequest() {
+            clearResults();
+            log('=== 測試 GET 請求（不需要 Token）===', 'info');
+            await test1();
+        }
+
+        async function runAllTests() {
+            clearResults();
+            log('=== 開始執行所有 CSRF 測試 ===', 'info');
+            log('請稍候，測試可能需要一些時間...', 'info');
+            
+            await test1();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await test2();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await test3();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await test4();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await test5();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await test6();
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            await test7();
+            
+            log('=== 所有測試完成 ===', 'info');
+        }
+
+        // 頁面載入時檢查登入狀態
+        window.addEventListener('load', async () => {
+            try {
+                const res = await fetch('/api/auth/me', {
+                    credentials: 'include'
+                });
+                const data = await res.json();
+                if (!data.isLogin) {
+                    log('⚠ 警告: 您似乎尚未登入系統。請先登入後再進行測試。', 'warning');
+                    log('   某些測試可能需要登入才能正常執行。', 'warning');
+                } else {
+                    log(`✓ 已登入為: ${data.name || data.username} (${data.role})`, 'success');
+                }
+            } catch (e) {
+                log(`⚠ 無法檢查登入狀態: ${e.message}`, 'warning');
+            }
+        });
+    </script>
+</body>
+</html>
