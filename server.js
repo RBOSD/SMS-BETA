@@ -3497,9 +3497,18 @@ app.delete('/api/plan-schedule/:id', requireAuth, requireAdminOrManager, verifyC
 async function startServer() {
     try {
         await initDB();
-        app.listen(PORT, () => {
-            console.log(`Server running on http://localhost:${PORT}`);
-        });
+       // 初始化資料庫 (維持異步執行)
+initDB().catch(err => console.error('Database initialization failed:', err));
+
+// 只有在非 Vercel 環境 (本機開發) 才執行 listen
+if (process.env.NODE_ENV !== 'production') {
+    app.listen(PORT, () => {
+        console.log(`Local server running at http://localhost:${PORT}`);
+    });
+}
+
+// 關鍵修改：必須導出 app，Vercel 才能抓到你的路由
+module.exports = app;
     } catch (e) {
         console.error("Server start failed:", e);
         process.exit(1);
