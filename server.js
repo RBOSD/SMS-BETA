@@ -3494,21 +3494,18 @@ app.delete('/api/plan-schedule/:id', requireAuth, requireAdminOrManager, verifyC
     }
 });
 
-// --- 路由定義結束 ---
-
-// 初始化資料庫 (維持異步執行，不阻塞啟動)
+// 1. 初始化資料庫 (維持異步執行)
 initDB().catch(err => {
     console.error('Database initialization failed during startup:', err);
 });
 
-// 判斷環境：只有在非生產環境（本機）才執行監聽
+// 2. 判斷環境：只有在「非」生產環境（本機）才執行監聽
 if (process.env.NODE_ENV !== 'production') {
     app.listen(PORT, () => {
         console.log(`【本機模式】伺服器運行於: http://localhost:${PORT}`);
     });
 }
 
-// 【最重要的修正】導出 app 給 Vercel 使用
+// 3. 【最重要的修正】導出 app 給 Vercel 使用 (這行必須在最外面，不能在 function 裡面)
 module.exports = app;
 
-startServer();
